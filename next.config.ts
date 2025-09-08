@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
         hostname: 'ccbuenavista.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.credilemon.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
