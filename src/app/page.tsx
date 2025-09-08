@@ -70,10 +70,10 @@ export default function Home() {
                 <SidebarMenuButton 
                   isActive={activeTab === 'chat'} 
                   onClick={() => setActiveTab('chat')}
-                  tooltip="Chat Interactivo"
+                  tooltip="Auditbot"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Chat Interactivo</span>
+                  <span>Auditbot</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>

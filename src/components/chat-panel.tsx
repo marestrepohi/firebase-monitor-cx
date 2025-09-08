@@ -73,7 +73,7 @@ export function ChatPanel({ evaluationContext }: ChatPanelProps) {
   return (
     <Card className="w-full h-[70vh] flex flex-col">
       <CardHeader>
-        <CardTitle className="font-headline">Chat con Asistente de Evaluaciones</CardTitle>
+        <CardTitle className="font-headline">Auditbot</CardTitle>
         <CardDescription>Realiza preguntas abiertas sobre el conjunto de datos cargado.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
