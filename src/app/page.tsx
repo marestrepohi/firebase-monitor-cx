@@ -5,13 +5,16 @@ import type { CallEvaluation } from '@/lib/mock-data';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
 import { evaluationsData } from '@/lib/mock-data';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarControls } from '@/components/sidebar-controls';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
-import { MessageSquare, BarChart2, Search } from 'lucide-react';
+import { MessageSquare, BarChart2, Search, LayoutGrid, Phone, Users, Bot, Briefcase, Info } from 'lucide-react';
+import { DashboardHeader } from '@/components/dashboard-header';
+import { Dashboard } from '@/components/dashboard';
+
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -56,22 +59,60 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon" variant="sidebar">
-        <SidebarControls
+      <Sidebar collapsible="icon" variant="sidebar" className='bg-sidebar'>
+         <SidebarControls
           maxRecords={allData.length}
           recordLimit={recordLimit}
           onRecordLimitChange={setRecordLimit}
-          sentimentData={sentimentData}
-          isLoading={isSentimentLoading}
         />
+        <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton isActive>
+                <LayoutGrid />
+                Resumen General
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Phone />
+                Centro de Llamadas
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Bot />
+                Asistentes de Texto
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Briefcase />
+                Campañas
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Users />
+                Información de Clientes
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+             <SidebarMenuItem>
+              <SidebarMenuButton>
+                <Info />
+                Casos de Uso
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center gap-4 p-4 border-b bg-card">
-          <SidebarTrigger />
-          <h1 className="text-xl font-bold font-headline text-foreground">Call Insights Analyzer</h1>
-        </header>
+        <DashboardHeader />
         <main className="flex-1 p-4 md:p-6">
-          <Tabs defaultValue="chat" className="w-full">
+          <Dashboard
+              sentimentData={sentimentData}
+              isLoading={isSentimentLoading}
+              recordCount={limitedData.length}
+            />
+          <Tabs defaultValue="chat" className="w-full mt-6">
             <TabsList className="grid w-full grid-cols-3 max-w-lg">
               <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat Interactivo</TabsTrigger>
               <TabsTrigger value="report"><BarChart2 className="w-4 h-4 mr-2" />Generador de Informes</TabsTrigger>
