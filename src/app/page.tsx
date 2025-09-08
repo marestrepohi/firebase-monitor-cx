@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -67,8 +68,15 @@ export default function Home() {
                 alt="Banco de Bogota"
                 width={150}
                 height={40}
-                className="mx-auto"
-                />
+                className="mx-auto group-data-[collapsible=icon]:hidden"
+            />
+            <Image
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2gHupSSAwtmca970tWEiS7BP9chvWKq-ZrVG7iVPyGpATcvv5nXhOyDkYpIjom2i0wNk&usqp=CAU"
+                alt="Banco de Bogota"
+                width={32}
+                height={32}
+                className="mx-auto hidden group-data-[collapsible=icon]:block"
+            />
         </SidebarHeader>
         <div className="flex-1 flex flex-col">
             <SidebarMenu className='flex-1'>
