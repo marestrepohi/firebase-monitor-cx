@@ -5,22 +5,21 @@ import type { CallEvaluation } from '@/lib/mock-data';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
 import { evaluationsData } from '@/lib/mock-data';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarControls } from '@/components/sidebar-controls';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
-import { MessageSquare, BarChart2, Search, LayoutGrid, Phone, Users, Bot, Briefcase, Info } from 'lucide-react';
+import { MessageSquare, BarChart2, Search } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
-import { Dashboard } from '@/components/dashboard';
-
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
   const [allData] = useState<CallEvaluation[]>(evaluationsData);
   const [sentimentData, setSentimentData] = useState<SentimentAnalysisOutput | null>(null);
   const [isSentimentLoading, setIsSentimentLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("chat");
 
   const limitedData = useMemo(() => {
     return allData.slice(0, recordLimit);
@@ -60,72 +59,56 @@ export default function Home() {
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" variant="sidebar" className='bg-sidebar'>
-         <SidebarControls
+        <SidebarControls
           maxRecords={allData.length}
           recordLimit={recordLimit}
           onRecordLimitChange={setRecordLimit}
         />
         <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton isActive>
-                <LayoutGrid />
-                Resumen General
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Phone />
-                Centro de Llamadas
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Bot />
-                Asistentes de Texto
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Briefcase />
-                Campañas
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Users />
-                Información de Clientes
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-              <SidebarMenuButton>
-                <Info />
-                Casos de Uso
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === 'chat'} 
+              onClick={() => setActiveTab('chat')}
+              tooltip="Chat Interactivo"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Chat Interactivo</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === 'report'}
+              onClick={() => setActiveTab('report')}
+              tooltip="Generador de Informes"
+            >
+              <BarChart2 className="w-4 h-4" />
+              <span>Generador de Informes</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              isActive={activeTab === 'inspector'}
+              onClick={() => setActiveTab('inspector')}
+              tooltip="Inspector de Llamadas"
+            >
+              <Search className="w-4 h-4" />
+              <span>Inspector de Llamadas</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </Sidebar>
       <SidebarInset>
         <DashboardHeader />
         <main className="flex-1 p-4 md:p-6">
-          <Dashboard
-              sentimentData={sentimentData}
-              isLoading={isSentimentLoading}
-              recordCount={limitedData.length}
-            />
-          <Tabs defaultValue="chat" className="w-full mt-6">
-            <TabsList className="grid w-full grid-cols-3 max-w-lg">
-              <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat Interactivo</TabsTrigger>
-              <TabsTrigger value="report"><BarChart2 className="w-4 h-4 mr-2" />Generador de Informes</TabsTrigger>
-              <TabsTrigger value="inspector"><Search className="w-4 h-4 mr-2" />Inspector de Llamadas</TabsTrigger>
-            </TabsList>
-            <TabsContent value="chat" className="mt-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsContent value="chat" className="mt-0">
               <ChatPanel evaluationContext={evaluationContext} />
             </TabsContent>
-            <TabsContent value="report" className="mt-6">
+            <TabsContent value="report" className="mt-0">
               <ReportPanel reportContext={evaluationContext} recordCount={limitedData.length} />
             </TabsContent>
-            <TabsContent value="inspector" className="mt-6">
-                <CallInspectorPanel callData={limitedData} />
+            <TabsContent value="inspector" className="mt-0">
+              <CallInspectorPanel callData={limitedData} />
             </TabsContent>
           </Tabs>
         </main>
