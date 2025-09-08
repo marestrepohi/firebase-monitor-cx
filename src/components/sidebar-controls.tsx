@@ -1,6 +1,5 @@
 'use client';
 
-import { SidebarContent, SidebarGroup } from '@/components/ui/sidebar';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 
@@ -16,27 +15,21 @@ export function SidebarControls({
   onRecordLimitChange,
 }: SidebarControlsProps) {
   return (
-    <>
-      <SidebarContent>
-        <SidebarGroup>
-          <div className="space-y-4 p-2">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <Label htmlFor="record-limit-slider" className="text-sm">Límite de registros</Label>
-                <span className="text-sm font-medium text-primary">{recordLimit}</span>
-              </div>
-              <Slider
-                id="record-limit-slider"
-                min={1}
-                max={maxRecords}
-                step={1}
-                value={[recordLimit]}
-                onValueChange={(value) => onRecordLimitChange(value[0])}
-              />
-            </div>
-          </div>
-        </SidebarGroup>
-      </SidebarContent>
-    </>
+    <div className="space-y-4 p-2">
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <Label htmlFor="record-limit-slider" className="text-sm">Límite de registros</Label>
+          <span className="text-sm font-medium text-primary">{recordLimit}</span>
+        </div>
+        <Slider
+          id="record-limit-slider"
+          min={1}
+          max={maxRecords}
+          step={1}
+          value={[recordLimit]}
+          onValueChange={(value) => onRecordLimitChange(value[0])}
+        />
+      </div>
+    </div>
   );
 }

@@ -5,14 +5,14 @@ import type { CallEvaluation } from '@/lib/mock-data';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
 import { evaluationsData } from '@/lib/mock-data';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SidebarControls } from '@/components/sidebar-controls';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
-import { MessageSquare, BarChart2, Search } from 'lucide-react';
+import { MessageSquare, BarChart2, Search, Settings } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
+import { ConfigDialog } from '@/components/config-dialog';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -20,6 +20,7 @@ export default function Home() {
   const [sentimentData, setSentimentData] = useState<SentimentAnalysisOutput | null>(null);
   const [isSentimentLoading, setIsSentimentLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   const limitedData = useMemo(() => {
     return allData.slice(0, recordLimit);
@@ -59,12 +60,7 @@ export default function Home() {
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" variant="sidebar" className='bg-sidebar'>
-        <SidebarControls
-          maxRecords={allData.length}
-          recordLimit={recordLimit}
-          onRecordLimitChange={setRecordLimit}
-        />
-        <div className="flex flex-col flex-1">
+        <div className="flex-1 flex flex-col">
             <SidebarMenu className='flex-1'>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -98,6 +94,16 @@ export default function Home() {
               </SidebarMenuItem>
             </SidebarMenu>
         </div>
+         <SidebarFooter>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => setIsConfigOpen(true)} tooltip="Configuración">
+                        <Settings className="w-4 h-4" />
+                        <span>Configuración</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
       <SidebarInset>
         <DashboardHeader />
@@ -115,6 +121,13 @@ export default function Home() {
           </Tabs>
         </main>
       </SidebarInset>
+      <ConfigDialog 
+        isOpen={isConfigOpen}
+        onOpenChange={setIsConfigOpen}
+        recordLimit={recordLimit}
+        onRecordLimitChange={setRecordLimit}
+        maxRecords={allData.length}
+      />
     </SidebarProvider>
   );
 }
