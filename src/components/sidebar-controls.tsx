@@ -2,7 +2,7 @@
 
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { SidebarHeader, SidebarContent, SidebarGroup, SidebarGroupLabel } from '@/components/ui/sidebar';
-import { Logo } from '@/components/icons';
+import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +27,14 @@ export function SidebarControls({
     <>
       <SidebarHeader>
         <div className="flex items-center gap-2">
-          <Logo className="w-8 h-8 text-primary" />
+            <Image 
+                src="https://ccbuenavista.com/wp-content/uploads/2020/12/banco-de-bogota-logo.png"
+                alt="Banco de Bogota Logo"
+                width={40}
+                height={40}
+                className="rounded-md"
+                data-ai-hint="logo"
+            />
           <div className="flex flex-col">
             <h2 className="text-lg font-bold font-headline">Auditbot</h2>
             <p className="text-sm text-muted-foreground">Cobranzas</p>
