@@ -12,7 +12,8 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
-import { MessageSquare, BarChart2, Search, Settings } from 'lucide-react';
+import { TranscriptionPanel } from '@/components/transcription-panel';
+import { MessageSquare, BarChart2, Search, Settings, AudioLines } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { ConfigDialog } from '@/components/config-dialog';
 
@@ -39,7 +40,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchSentiment = async () => {
-      if (limitedData.length > 0) {
+      if (limitedData.length > 0 && activeTab !== 'transcription') {
         setIsSentimentLoading(true);
         try {
           const callDetails = limitedData.map((d) => ({
@@ -57,7 +58,7 @@ export default function Home() {
       }
     };
     fetchSentiment();
-  }, [limitedData]);
+  }, [limitedData, activeTab]);
 
   return (
     <SidebarProvider>
@@ -110,6 +111,16 @@ export default function Home() {
                   <span>Inspector de Llamadas</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeTab === 'transcription'}
+                  onClick={() => setActiveTab('transcription')}
+                  tooltip="Transcripción de Audio"
+                >
+                  <AudioLines className="w-4 h-4" />
+                  <span>Transcripción</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
         </div>
          <SidebarFooter>
@@ -135,6 +146,9 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="inspector" className="mt-0">
               <CallInspectorPanel callData={limitedData} />
+            </TabsContent>
+            <TabsContent value="transcription" className="mt-0">
+              <TranscriptionPanel />
             </TabsContent>
           </Tabs>
         </main>
