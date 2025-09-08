@@ -71,7 +71,7 @@ export default function Home() {
                 className="mx-auto group-data-[collapsible=icon]:hidden"
             />
             <Image
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2gHupSSAwtmca970tWEiS7BP9chvWKq-ZrVG7iVPyGpATcvv5nXhOyDkYpIjom2i0wNk&usqp=CAU"
+                src="https://static.wikia.nocookie.net/logopedia/images/1/1c/BancodeBogot%C3%A12008verticalplane.svg/revision/latest/scale-to-width-down/250?cb=20240518224319&path-prefix=es"
                 alt="Banco de Bogota"
                 width={32}
                 height={32}
