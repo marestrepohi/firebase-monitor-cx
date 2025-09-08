@@ -89,6 +89,7 @@ export function ChatPanel({ evaluationContext }: ChatPanelProps) {
               >
                 {message.role === 'assistant' && (
                   <Avatar className="w-8 h-8 border">
+                    <AvatarImage src="https://static.wikia.nocookie.net/logopedia/images/1/1c/BancodeBogot%C3%A12008verticalplane.svg/revision/latest/scale-to-width-down/32?cb=20240518224319&path-prefix=es" alt="Auditbot" />
                     <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                 )}
@@ -112,6 +113,7 @@ export function ChatPanel({ evaluationContext }: ChatPanelProps) {
             {isLoading && (
                <div className='flex items-start gap-3 justify-start'>
                   <Avatar className="w-8 h-8 border">
+                    <AvatarImage src="https://static.wikia.nocookie.net/logopedia/images/1/1c/BancodeBogot%C3%A12008verticalplane.svg/revision/latest/scale-to-width-down/32?cb=20240518224319&path-prefix=es" alt="Auditbot" />
                     <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                   <div className='bg-muted rounded-lg p-3 space-y-2'>
