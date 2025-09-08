@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarControls } from '@/components/sidebar-controls';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
-import { MessageSquare, BarChart2 } from 'lucide-react';
+import { CallInspectorPanel } from '@/components/call-inspector-panel';
+import { MessageSquare, BarChart2, Search } from 'lucide-react';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -71,15 +72,19 @@ export default function Home() {
         </header>
         <main className="flex-1 p-4 md:p-6">
           <Tabs defaultValue="chat" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsList className="grid w-full grid-cols-3 max-w-lg">
               <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat Interactivo</TabsTrigger>
               <TabsTrigger value="report"><BarChart2 className="w-4 h-4 mr-2" />Generador de Informes</TabsTrigger>
+              <TabsTrigger value="inspector"><Search className="w-4 h-4 mr-2" />Inspector de Llamadas</TabsTrigger>
             </TabsList>
             <TabsContent value="chat" className="mt-6">
               <ChatPanel evaluationContext={evaluationContext} />
             </TabsContent>
             <TabsContent value="report" className="mt-6">
               <ReportPanel reportContext={evaluationContext} recordCount={limitedData.length} />
+            </TabsContent>
+            <TabsContent value="inspector" className="mt-6">
+                <CallInspectorPanel callData={limitedData} />
             </TabsContent>
           </Tabs>
         </main>
