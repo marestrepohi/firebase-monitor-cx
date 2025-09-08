@@ -71,20 +71,13 @@ export function CallInspectorPanel({ callData }: CallInspectorPanelProps) {
                   <p className="text-sm text-muted-foreground">{selectedCall.id_llamada_procesada}</p>
                 </div>
                 <Separator/>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-4">
                     {Object.entries(evaluationDetails).map(([key, value]) => (
                         <div key={key}>
                             <p className="font-medium text-muted-foreground">{key}</p>
                             <p>{value}</p>
                         </div>
                     ))}
-                </div>
-                <Separator/>
-                <div>
-                  <h3 className="font-semibold">Evaluación Completa</h3>
-                  <pre className="mt-2 text-xs bg-muted p-3 rounded-md whitespace-pre-wrap font-code">
-                    <code>{selectedCall.evaluacion_llamada}</code>
-                  </pre>
                 </div>
               </div>
             </ScrollArea>
