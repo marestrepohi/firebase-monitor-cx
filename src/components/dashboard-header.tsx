@@ -1,6 +1,4 @@
-import { Bell, User } from "lucide-react";
 import Image from "next/image";
-import { Button } from "./ui/button";
 
 export function DashboardHeader() {
   return (
@@ -13,12 +11,6 @@ export function DashboardHeader() {
                 height={40}
                 className="object-contain"
             />
-            <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-            </Button>
         </div>
     </header>
   );
