@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SidebarControls } from '@/components/sidebar-controls';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
+import { MessageSquare, BarChart2 } from 'lucide-react';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -71,8 +72,8 @@ export default function Home() {
         <main className="flex-1 p-4 md:p-6">
           <Tabs defaultValue="chat" className="w-full">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="chat">💬 Chat Interactivo</TabsTrigger>
-              <TabsTrigger value="report">📊 Generador de Informes</TabsTrigger>
+              <TabsTrigger value="chat"><MessageSquare className="w-4 h-4 mr-2" />Chat Interactivo</TabsTrigger>
+              <TabsTrigger value="report"><BarChart2 className="w-4 h-4 mr-2" />Generador de Informes</TabsTrigger>
             </TabsList>
             <TabsContent value="chat" className="mt-6">
               <ChatPanel evaluationContext={evaluationContext} />

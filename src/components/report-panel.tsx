@@ -5,7 +5,7 @@ import { getExecutiveReport } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Wand2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReportPanelProps {
@@ -39,7 +39,7 @@ export function ReportPanel({ reportContext, recordCount }: ReportPanelProps) {
                 {isLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                    '✨'
+                    <Wand2 className="mr-2 h-4 w-4" />
                 )}
                 Generar Informe
             </Button>
