@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import type { CallEvaluation } from '@/lib/mock-data';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
 import { evaluationsData } from '@/lib/mock-data';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter } from '@/components/ui/sidebar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
@@ -60,6 +61,15 @@ export default function Home() {
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" variant="sidebar" className='bg-sidebar'>
+        <SidebarHeader>
+            <Image
+                src="https://www.credilemon.com/img/logo/co/banco-de-bogota.webp"
+                alt="Banco de Bogota"
+                width={150}
+                height={40}
+                className="mx-auto"
+                />
+        </SidebarHeader>
         <div className="flex-1 flex flex-col">
             <SidebarMenu className='flex-1'>
               <SidebarMenuItem>
