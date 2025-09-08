@@ -64,38 +64,40 @@ export default function Home() {
           recordLimit={recordLimit}
           onRecordLimitChange={setRecordLimit}
         />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === 'chat'} 
-              onClick={() => setActiveTab('chat')}
-              tooltip="Chat Interactivo"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Chat Interactivo</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === 'report'}
-              onClick={() => setActiveTab('report')}
-              tooltip="Generador de Informes"
-            >
-              <BarChart2 className="w-4 h-4" />
-              <span>Generador de Informes</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              isActive={activeTab === 'inspector'}
-              onClick={() => setActiveTab('inspector')}
-              tooltip="Inspector de Llamadas"
-            >
-              <Search className="w-4 h-4" />
-              <span>Inspector de Llamadas</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex flex-col flex-1">
+            <SidebarMenu className='flex-1'>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeTab === 'chat'} 
+                  onClick={() => setActiveTab('chat')}
+                  tooltip="Chat Interactivo"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Chat Interactivo</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeTab === 'report'}
+                  onClick={() => setActiveTab('report')}
+                  tooltip="Generador de Informes"
+                >
+                  <BarChart2 className="w-4 h-4" />
+                  <span>Generador de Informes</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeTab === 'inspector'}
+                  onClick={() => setActiveTab('inspector')}
+                  tooltip="Inspector de Llamadas"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>Inspector de Llamadas</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+        </div>
       </Sidebar>
       <SidebarInset>
         <DashboardHeader />
