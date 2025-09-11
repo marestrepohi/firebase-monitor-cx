@@ -37,7 +37,7 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
       setSelectedCallId(null);
       setError(null);
       
-      const url = `/data/${selectedDatasetFile}`;
+      const url = `/${selectedDatasetFile}`;
 
       try {
         const response = await fetch(url);
@@ -55,7 +55,7 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
         setAllCallData(parsedData);
       } catch (e) {
         console.error("Failed to load or parse evaluation data:", e);
-        setError(`Error al cargar los datos. Verifique que el archivo '${selectedDatasetFile}' exista en la carpeta 'public/data' y tenga el formato correcto.`);
+        setError(`Error al cargar los datos. Verifique que el archivo '${selectedDatasetFile}' exista en la carpeta 'public' y tenga el formato correcto.`);
       } finally {
         setIsLoading(false);
       }
