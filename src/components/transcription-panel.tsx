@@ -20,6 +20,7 @@ export function TranscriptionPanel() {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
+      setError(null);
     }
   };
 
@@ -41,7 +42,11 @@ export function TranscriptionPanel() {
         setTranscription(result);
 
     } catch (err) {
-      setError('Ocurrió un error durante la transcripción. Por favor, inténtalo de nuevo.');
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Ocurrió un error inesperado durante la transcripción.');
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -62,7 +67,7 @@ export function TranscriptionPanel() {
           {isLoading ? <Loader className='w-4 h-4 animate-spin mr-2' /> : null}
           {isLoading ? 'Transcribiendo...' : 'Transcribir Audio'}
         </Button>
-        {error && <p className='text-red-500 text-sm'>{error}</p>}
+        {error && <p className='text-red-500 text-sm font-medium p-3 bg-red-100 rounded-md'>{error}</p>}
         {transcription && (
           <div className='space-y-2'>
             <Label>Resultado de la Transcripción</Label>
