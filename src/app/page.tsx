@@ -13,7 +13,8 @@ import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { CallInspectorPanel } from '@/components/call-inspector-panel';
 import { TranscriptionPanel } from '@/components/transcription-panel';
-import { MessageSquare, BarChart2, Search, Settings, AudioLines } from 'lucide-react';
+import { LookerStudioPanel } from '@/components/looker-studio-panel';
+import { MessageSquare, BarChart2, Search, Settings, AudioLines, AreaChart } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { ConfigDialog } from '@/components/config-dialog';
 
@@ -40,7 +41,7 @@ export default function Home() {
 
   useEffect(() => {
     const fetchSentiment = async () => {
-      if (limitedData.length > 0 && activeTab !== 'transcription') {
+      if (limitedData.length > 0 && activeTab !== 'transcription' && activeTab !== 'dashboards') {
         setIsSentimentLoading(true);
         try {
           const callDetails = limitedData.map((d) => ({
@@ -121,6 +122,16 @@ export default function Home() {
                   <span>Transcripción</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeTab === 'dashboards'}
+                  onClick={() => setActiveTab('dashboards')}
+                  tooltip="Dashboards"
+                >
+                  <AreaChart className="w-4 h-4" />
+                  <span>Dashboards</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
         </div>
          <SidebarFooter>
@@ -149,6 +160,9 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="transcription" className="mt-0">
               <TranscriptionPanel />
+            </TabsContent>
+            <TabsContent value="dashboards" className="mt-0">
+              <LookerStudioPanel />
             </TabsContent>
           </Tabs>
         </main>
