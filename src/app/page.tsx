@@ -3,15 +3,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import type { CallEvaluation } from '@/lib/mock-data';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
-import { evaluationsData } from '@/lib/mock-data';
 import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
-import { CallInspectorPanel } from '@/components/call-inspector-panel';
+import { EvaluationMonitorPanel } from '@/components/evaluation-monitor-panel';
 import { TranscriptionPanel } from '@/components/transcription-panel';
 import { LookerStudioPanel } from '@/components/looker-studio-panel';
 import { MessageSquare, BarChart2, Search, Settings, AudioLines, AreaChart } from 'lucide-react';
@@ -20,46 +18,27 @@ import { ConfigDialog } from '@/components/config-dialog';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
-  const [allData] = useState<CallEvaluation[]>(evaluationsData);
   const [sentimentData, setSentimentData] = useState<SentimentAnalysisOutput | null>(null);
   const [isSentimentLoading, setIsSentimentLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [evaluationContext, setEvaluationContext] = useState('');
+  const [recordCount, setRecordCount] = useState(0);
 
-  const limitedData = useMemo(() => {
-    return allData.slice(0, recordLimit);
-  }, [allData, recordLimit]);
-
-  const evaluationContext = useMemo(() => {
-    return limitedData
-      .map(
-        (eval_item) =>
-          `\n---\nID: ${eval_item.id_llamada_procesada}\nDataset: ${eval_item.dataset}\nEvaluación: ${eval_item.evaluacion_llamada}\n---`
-      )
-      .join('');
-  }, [limitedData]);
-
+  // This will be updated by the EvaluationMonitorPanel
+  const handleContextUpdate = (context: string, count: number) => {
+    setEvaluationContext(context);
+    setRecordCount(count);
+  };
+  
   useEffect(() => {
     const fetchSentiment = async () => {
-      if (limitedData.length > 0 && activeTab !== 'transcription' && activeTab !== 'dashboards') {
-        setIsSentimentLoading(true);
-        try {
-          const callDetails = limitedData.map((d) => ({
-            id_llamada_procesada: d.id_llamada_procesada,
-            evaluacion_llamada: d.evaluacion_llamada,
-          }));
-          const data = await getSentimentAnalysis({ callDetails });
-          setSentimentData(data);
-        } catch (error) {
-          console.error("Failed to fetch sentiment analysis:", error);
-          setSentimentData(null);
-        } finally {
-          setIsSentimentLoading(false);
-        }
-      }
+      // This is a placeholder for sentiment analysis on the loaded data.
+      // Currently, it's not directly wired to the dynamically loaded data.
+      // To implement this, we would need to pass call details from EvaluationMonitorPanel up to here.
     };
     fetchSentiment();
-  }, [limitedData, activeTab]);
+  }, [evaluationContext, activeTab]);
 
   return (
     <SidebarProvider>
@@ -106,10 +85,10 @@ export default function Home() {
                 <SidebarMenuButton 
                   isActive={activeTab === 'inspector'}
                   onClick={() => setActiveTab('inspector')}
-                  tooltip="Inspector de Llamadas"
+                  tooltip="Monitor de Evaluaciones"
                 >
                   <Search className="w-4 h-4" />
-                  <span>Inspector de Llamadas</span>
+                  <span>Monitor de Evaluaciones</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -153,10 +132,10 @@ export default function Home() {
               <ChatPanel evaluationContext={evaluationContext} />
             </TabsContent>
             <TabsContent value="report" className="mt-0">
-              <ReportPanel reportContext={evaluationContext} recordCount={limitedData.length} />
+              <ReportPanel reportContext={evaluationContext} recordCount={recordCount} />
             </TabsContent>
             <TabsContent value="inspector" className="mt-0">
-              <CallInspectorPanel callData={limitedData} />
+              <EvaluationMonitorPanel onContextUpdate={handleContextUpdate} />
             </TabsContent>
             <TabsContent value="transcription" className="mt-0">
               <TranscriptionPanel />
@@ -172,7 +151,7 @@ export default function Home() {
         onOpenChange={setIsConfigOpen}
         recordLimit={recordLimit}
         onRecordLimitChange={setRecordLimit}
-        maxRecords={allData.length}
+        maxRecords={recordCount}
       />
     </SidebarProvider>
   );
