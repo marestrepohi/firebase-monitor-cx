@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const lookerStudioLinks = {
@@ -11,21 +11,15 @@ const lookerStudioLinks = {
 
 export function LookerStudioPanel() {
   return (
-    <Card className="w-full">
-        <CardHeader>
-            <CardTitle>Reportes de Looker Studio</CardTitle>
-            <CardDescription>
-                Visualiza los dashboards de cobranzas y llamadas directamente desde Looker Studio.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <Card className="w-full border-0 shadow-none">
+        <CardContent className="p-0">
             <Tabs defaultValue="cobranzas" className="w-full">
                 <TabsList>
                     <TabsTrigger value="cobranzas">Cobranzas</TabsTrigger>
                     <TabsTrigger value="call">Call</TabsTrigger>
                 </TabsList>
                 <TabsContent value="cobranzas">
-                    <div className="w-full h-[70vh] border rounded-lg overflow-hidden">
+                    <div className="w-full h-[70vh] border rounded-lg overflow-hidden mt-4">
                         <iframe
                             title="Reporte Cobranzas"
                             width="100%"
@@ -37,7 +31,7 @@ export function LookerStudioPanel() {
                     </div>
                 </TabsContent>
                 <TabsContent value="call">
-                    <div className="w-full h-[70vh] border rounded-lg overflow-hidden">
+                    <div className="w-full h-[70vh] border rounded-lg overflow-hidden mt-4">
                         <iframe
                             title="Reporte Call"
                             width="100%"
