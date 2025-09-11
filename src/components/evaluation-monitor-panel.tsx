@@ -46,11 +46,23 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
         }
         const data: CallEvaluation[] = await response.json();
         
-        // Parse the nested JSON string
-        const parsedData = data.map(call => ({
-            ...call,
-            evaluacion_llamada_parsed: JSON.parse(call.evaluacion_llamada_raw)
-        }));
+        // Parse the nested JSON string for each call record
+        const parsedData = data.map(call => {
+            let parsedJson = {};
+            try {
+                // Only parse if the raw string exists and is not empty
+                if (call.evaluacion_llamada_raw && call.evaluacion_llamada_raw.trim() !== '') {
+                    parsedJson = JSON.parse(call.evaluacion_llamada_raw);
+                }
+            } catch (parseError) {
+                console.error(`Failed to parse evaluacion_llamada_raw for call ID ${call.id_llamada_procesada}:`, parseError);
+                // Assign an empty object if parsing fails to prevent crashing
+            }
+            return {
+                ...call,
+                evaluacion_llamada_parsed: parsedJson,
+            };
+        });
 
         setAllCallData(parsedData);
       } catch (e) {
