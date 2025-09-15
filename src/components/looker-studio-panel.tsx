@@ -15,6 +15,9 @@ export function LookerStudioPanel() {
             <TabsList>
                 <TabsTrigger value="cobranzas">Casa Menor</TabsTrigger>
                 <TabsTrigger value="call">Call</TabsTrigger>
+                <TabsTrigger value="casa_mayor">Casa Mayor</TabsTrigger>
+                <TabsTrigger value="abogados">Abogados</TabsTrigger>
+                <TabsTrigger value="bot">Bot</TabsTrigger>
             </TabsList>
         </div>
         <TabsContent value="cobranzas">
@@ -36,6 +39,42 @@ export function LookerStudioPanel() {
                     width="100%"
                     height="100%"
                     src={lookerStudioLinks.call}
+                    allowFullScreen
+                    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+                ></iframe>
+            </div>
+        </TabsContent>
+        <TabsContent value="casa_mayor">
+            <div className="w-full h-[70vh] border rounded-lg overflow-hidden mt-4">
+                <iframe
+                    title="Reporte Casa Mayor"
+                    width="100%"
+                    height="100%"
+                    src={lookerStudioLinks.cobranzas}
+                    allowFullScreen
+                    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+                ></iframe>
+            </div>
+        </TabsContent>
+        <TabsContent value="abogados">
+            <div className="w-full h-[70vh] border rounded-lg overflow-hidden mt-4">
+                <iframe
+                    title="Reporte Abogados"
+                    width="100%"
+                    height="100%"
+                    src={lookerStudioLinks.cobranzas}
+                    allowFullScreen
+                    sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
+                ></iframe>
+            </div>
+        </TabsContent>
+        <TabsContent value="bot">
+            <div className="w-full h-[70vh] border rounded-lg overflow-hidden mt-4">
+                <iframe
+                    title="Reporte Bot"
+                    width="100%"
+                    height="100%"
+                    src={lookerStudioLinks.cobranzas}
                     allowFullScreen
                     sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"
                 ></iframe>
