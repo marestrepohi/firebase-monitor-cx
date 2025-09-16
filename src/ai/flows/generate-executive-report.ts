@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview A streaming flow for generating executive reports.
+ * @fileOverview A flow for generating executive reports.
  *
- * - generateExecutiveReport - A function that streams a generated executive report.
+ * - generateExecutiveReport - A function that generates an executive report.
  * - GenerateExecutiveReportInput - The input type for the generateExecutiveReport function.
  * - GenerateExecutiveReportOutput - The return type for the generateExecutiveReport function (a string).
  */
@@ -20,7 +20,7 @@ export type GenerateExecutiveReportInput = z.infer<typeof GenerateExecutiveRepor
 const GenerateExecutiveReportOutputSchema = z.string().describe('The generated executive report in Markdown format.');
 export type GenerateExecutiveReportOutput = z.infer<typeof GenerateExecutiveReportOutputSchema>;
 
-export async function generateExecutiveReport(input: GenerateExecutiveReportInput): Promise<genkit.FlowStream<string>> {
+export async function generateExecutiveReport(input: GenerateExecutiveReportInput): Promise<string> {
   return genkit.runFlow(generateExecutiveReportFlow, input);
 }
 
@@ -28,7 +28,7 @@ const generateExecutiveReportPrompt = ai.definePrompt({
   name: 'generateExecutiveReportPrompt',
   input: {schema: GenerateExecutiveReportInputSchema},
   output: {schema: GenerateExecutiveReportOutputSchema},
-  model: 'googleai/gemini-2.5-flash',
+  model: 'googleai/gemini-1.5-pro-latest',
   prompt: `
     Actúa como un Analista Estratégico Senior de Experiencia del Cliente especializado en cobranzas bancarias.
 
@@ -72,12 +72,9 @@ const generateExecutiveReportFlow = ai.defineFlow(
     name: 'generateExecutiveReportFlow',
     inputSchema: GenerateExecutiveReportInputSchema,
     outputSchema: GenerateExecutiveReportOutputSchema,
-    stream: true,
   },
-  async function* (input) {
-    const stream = await generateExecutiveReportPrompt.stream(input);
-    for await (const chunk of stream) {
-      yield chunk.text() ?? '';
-    }
+  async (input) => {
+    const llmResponse = await generateExecutiveReportPrompt.generate(input);
+    return llmResponse.text();
   }
 );

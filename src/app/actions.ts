@@ -76,7 +76,7 @@ export async function getExecutiveReport(
   reportContext: string,
   datasetName?: string,
   questions?: string[],
-): Promise<ReadableStream<any>> {
+): Promise<string> {
   const sourceName = datasetName || 'Cobranzas Call';
   const payload = {
     sourceName,
@@ -85,19 +85,12 @@ export async function getExecutiveReport(
   };
 
   try {
-    const stream = await generateExecutiveReport(payload);
-    return stream.pipeThrough(new TextEncoder());
+    const report = await generateExecutiveReport(payload);
+    return report;
   } catch (error) {
-    console.error('Error in getExecutiveReport streaming action:', error);
-    // Si falla, devuelve un stream que emite un único mensaje de error y se cierra.
-    return new ReadableStream({
-      start(controller) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorMarkdown = `## Error al Generar el Informe\n\nEl servicio no pudo iniciar el streaming de datos.\n\n**Detalles:** ${errorMessage}`;
-        controller.enqueue(new TextEncoder().encode(errorMarkdown));
-        controller.close();
-      },
-    });
+    console.error('Error in getExecutiveReport action:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return `## Error al Generar el Informe\n\nNo se pudo generar el informe.\n\n**Detalles:** ${errorMessage}`;
   }
 }
 

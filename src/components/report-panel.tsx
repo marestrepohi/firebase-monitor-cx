@@ -3,11 +3,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getExecutiveReport } from '@/app/actions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Download, Loader2, Settings2, Wand2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { DATASET_CONFIG, QUESTIONS_FOR_REPORTS } from '@/lib/constants';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -91,22 +90,11 @@ export function ReportPanel() {
     setReport('');
     try {
       const context = await buildReportContext();
-      const stream = await getExecutiveReport(context, datasetName, questions);
-      
-      const reader = stream.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        
-        const chunk = decoder.decode(value, { stream: true });
-        setReport((prevReport) => prevReport + chunk);
-      }
-
+      const result = await getExecutiveReport(context, datasetName, questions);
+      setReport(result);
     } catch (error) {
-      console.error("Error processing stream:", error);
-      setReport('## ❌ Error\n\nOcurrió un error al procesar la respuesta del informe.');
+      console.error("Error generating report:", error);
+      setReport('## ❌ Error\n\nOcurrió un error al generar el informe.');
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +136,7 @@ export function ReportPanel() {
 
   return (
     <Card className="w-full h-[84vh] md:h-[86vh] flex flex-col">
-      <CardHeader>
+      <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden pt-6">
         <div className="flex flex-col sm:flex-row sm:justify-end sm:items-start gap-4">
           <div className="flex flex-wrap gap-2 w-full justify-end">
             <Button variant="outline" onClick={() => setIsConfigOpen(true)}>
@@ -167,9 +155,7 @@ export function ReportPanel() {
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-        <div className="border rounded-lg flex-1 flex flex-col">
+        <div className="border rounded-lg flex-1 flex flex-col mt-4">
           {isLoading && (
             <div className="flex flex-col items-center justify-center h-full text-center p-6 gap-2">
               <div className="text-5xl mb-2 flex items-center gap-3">
