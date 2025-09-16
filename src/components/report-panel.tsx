@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -5,7 +6,7 @@ import { getExecutiveReport } from '@/app/actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Download, FileDown, Loader2, Settings2, Wand2 } from 'lucide-react';
+import { Download, Loader2, Settings2, Wand2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DATASET_CONFIG, QUESTIONS_FOR_REPORTS } from '@/lib/constants';
 import ReactMarkdown from 'react-markdown';
@@ -88,20 +89,6 @@ export function ReportPanel() {
     setIsLoading(false);
   };
 
-  const downloadMarkdown = () => {
-    if (!report) return;
-    const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    a.href = url;
-    a.download = `informe-${datasetName}-${ts}.md`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  };
-
   const exportPdf = async () => {
     if (!reportRef.current) return;
     const el = reportRef.current;
@@ -147,9 +134,6 @@ export function ReportPanel() {
                 <Wand2 className="mr-2 h-4 w-4" />
               )}
               Generar Informe
-            </Button>
-            <Button variant="secondary" onClick={downloadMarkdown} disabled={!report}>
-              <FileDown className="mr-2 h-4 w-4" /> Descargar Markdown
             </Button>
             <Button variant="secondary" onClick={exportPdf} disabled={!report}>
               <Download className="mr-2 h-4 w-4" /> Exportar PDF

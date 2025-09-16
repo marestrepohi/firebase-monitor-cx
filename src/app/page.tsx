@@ -152,7 +152,11 @@ export default function Home() {
   </div>
       </Sidebar>
   <SidebarInset>
-    <DashboardHeader title={currentTitle} onOpenConfig={() => setIsConfigOpen(true)} />
+    <DashboardHeader 
+      title={currentTitle} 
+      onOpenConfig={() => setIsConfigOpen(true)}
+      showConfigButton={activeTab === 'chat'}
+    />
     <main className="flex-1 p-2 md:p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
     <TabsContent value="chat" className="mt-0">
