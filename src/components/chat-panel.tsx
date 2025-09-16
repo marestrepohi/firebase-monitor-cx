@@ -108,25 +108,14 @@ export function ChatPanel({ evaluationContext, defaultDataset, recordLimit, rese
 
   // Pre-resumen local si el contexto inyectado es muy grande para reducir coste
   const preparedContext = await summarizeIfLong(evaluationContext || '');
-  const callWithTimeout = async <T,>(p: Promise<T>, ms: number): Promise<T> => {
-    return await Promise.race([
-      p,
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
-    ]);
-  };
+
   try {
-    const response = await callWithTimeout(
-      getChatResponse(data.prompt, { datasetName, limit, rawContext: preparedContext || undefined, reset: needsReset }),
-      45000
-    );
+    const response = await getChatResponse(data.prompt, { datasetName, limit, rawContext: preparedContext || undefined, reset: needsReset });
     if (needsReset) setNeedsReset(false);
     const assistantMessage: Message = { role: 'assistant', content: response.answer };
     setMessages((prev) => [...prev, assistantMessage]);
   } catch (err: any) {
-    const isTimeout = err && err.message === 'timeout';
-    const errorText = isTimeout
-      ? '⏳ El modelo está tardando más de lo esperado. Por favor, intenta de nuevo o ajusta el límite de registros/dataset.'
-      : '⚠️ Ocurrió un error al procesar tu solicitud. Intenta nuevamente. Si persiste, revisa la conexión o reduce el límite de registros.';
+    const errorText = '⚠️ Ocurrió un error al procesar tu solicitud. Intenta nuevamente. Si persiste, revisa la conexión, el límite de registros o los logs del servidor.';
     const assistantMessage: Message = { role: 'assistant', content: errorText };
     setMessages((prev) => [...prev, assistantMessage]);
     console.error('Error en chat:', err);
