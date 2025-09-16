@@ -89,10 +89,27 @@ export function ReportPanel() {
   const handleGenerateReport = async () => {
     setIsLoading(true);
     setReport('');
-    const context = await buildReportContext();
-    const generatedReport = await getExecutiveReport(context, datasetName, questions);
-    setReport(generatedReport);
-    setIsLoading(false);
+    try {
+      const context = await buildReportContext();
+      const stream = await getExecutiveReport(context, datasetName, questions);
+      
+      const reader = stream.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        setReport((prevReport) => prevReport + chunk);
+      }
+
+    } catch (error) {
+      console.error("Error processing stream:", error);
+      setReport('## ❌ Error\n\nOcurrió un error al procesar la respuesta del informe.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const exportPdf = async () => {

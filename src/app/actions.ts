@@ -2,7 +2,7 @@
 'use server';
 
 import { answerQuestion, type AnswerQuestionOutput } from '@/ai/flows/ai-powered-question-answering';
-import { generateExecutiveReport, type GenerateExecutiveReportOutput } from '@/ai/flows/generate-executive-report';
+import { generateExecutiveReport } from '@/ai/flows/generate-executive-report';
 import { analyzeSentimentTrends, type SentimentAnalysisInput, type SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { QUESTIONS_FOR_REPORTS, DATASET_CONFIG } from '@/lib/constants';
 import fs from 'node:fs/promises';
@@ -76,43 +76,29 @@ export async function getExecutiveReport(
   reportContext: string,
   datasetName?: string,
   questions?: string[],
-): Promise<GenerateExecutiveReportOutput> {
+): Promise<ReadableStream<any>> {
   const sourceName = datasetName || 'Cobranzas Call';
-  const isTransientError = (e: any) => {
-    const status = (e && (e.status || e.code)) ?? undefined;
-    const msg = (e && (e.message || e.originalMessage || String(e)))?.toString().toLowerCase?.() || '';
-    return (
-      status === 503 ||
-      /503|service unavailable|overloaded|deadline|unavailable|rate|quota/.test(msg)
-    );
-  };
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
   const payload = {
     sourceName,
     reportContext,
     questions: (questions && questions.length > 0) ? questions : QUESTIONS_FOR_REPORTS,
   };
 
-  const MAX_ATTEMPTS = 3;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      const result = await generateExecutiveReport(payload);
-      return result;
-    } catch (error) {
-      const last = attempt === MAX_ATTEMPTS;
-      if (!last && isTransientError(error)) {
-        const backoff = 800 * Math.pow(2, attempt - 1);
-        console.warn(`getExecutiveReport transient error (attempt ${attempt}/${MAX_ATTEMPTS}). Retrying in ${backoff}ms...`, error);
-        await delay(backoff);
-        continue;
-      }
-      console.error('Error in getExecutiveReport:', error);
-      return `## Error al Generar el Informe\n\nEl servicio de modelo se encuentra temporalmente no disponible o ocurrió un error. Por favor, intenta nuevamente en unos momentos.\n\n**Detalles:** ${error instanceof Error ? error.message : String(error)}`;
-    }
+  try {
+    const stream = await generateExecutiveReport(payload);
+    return stream.pipeThrough(new TextEncoder());
+  } catch (error) {
+    console.error('Error in getExecutiveReport streaming action:', error);
+    // Si falla, devuelve un stream que emite un único mensaje de error y se cierra.
+    return new ReadableStream({
+      start(controller) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMarkdown = `## Error al Generar el Informe\n\nEl servicio no pudo iniciar el streaming de datos.\n\n**Detalles:** ${errorMessage}`;
+        controller.enqueue(new TextEncoder().encode(errorMarkdown));
+        controller.close();
+      },
+    });
   }
-  // Fallback imposible de alcanzar, pero requerido por TS
-  return '## Error al Generar el Informe\n\nNo se pudo generar el informe.';
 }
 
 /**

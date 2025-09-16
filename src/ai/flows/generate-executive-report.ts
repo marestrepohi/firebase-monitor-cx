@@ -1,14 +1,13 @@
 'use server';
-
 /**
- * @fileOverview Generates a comprehensive executive report from call data, answering predefined questions to provide strategic insights into call center performance.
+ * @fileOverview A streaming flow for generating executive reports.
  *
- * - generateExecutiveReport - A function that generates the executive report.
+ * - generateExecutiveReport - A function that streams a generated executive report.
  * - GenerateExecutiveReportInput - The input type for the generateExecutiveReport function.
- * - GenerateExecutiveReportOutput - The return type for the generateExecutiveReport function.
+ * - GenerateExecutiveReportOutput - The return type for the generateExecutiveReport function (a string).
  */
-
 import {ai} from '@/ai/genkit';
+import * as genkit from 'genkit';
 import {z} from 'genkit';
 
 const GenerateExecutiveReportInputSchema = z.object({
@@ -18,17 +17,18 @@ const GenerateExecutiveReportInputSchema = z.object({
 });
 export type GenerateExecutiveReportInput = z.infer<typeof GenerateExecutiveReportInputSchema>;
 
-const GenerateExecutiveReportOutputSchema = z.string().describe('The generated executive report.');
+const GenerateExecutiveReportOutputSchema = z.string().describe('The generated executive report in Markdown format.');
 export type GenerateExecutiveReportOutput = z.infer<typeof GenerateExecutiveReportOutputSchema>;
 
-export async function generateExecutiveReport(input: GenerateExecutiveReportInput): Promise<GenerateExecutiveReportOutput> {
-  return generateExecutiveReportFlow(input);
+export async function generateExecutiveReport(input: GenerateExecutiveReportInput): Promise<genkit.FlowStream<string>> {
+  return genkit.runFlow(generateExecutiveReportFlow, input);
 }
 
 const generateExecutiveReportPrompt = ai.definePrompt({
   name: 'generateExecutiveReportPrompt',
   input: {schema: GenerateExecutiveReportInputSchema},
   output: {schema: GenerateExecutiveReportOutputSchema},
+  model: 'googleai/gemini-2.5-flash',
   prompt: `
     Actúa como un Analista Estratégico Senior de Experiencia del Cliente especializado en cobranzas bancarias.
 
@@ -72,13 +72,12 @@ const generateExecutiveReportFlow = ai.defineFlow(
     name: 'generateExecutiveReportFlow',
     inputSchema: GenerateExecutiveReportInputSchema,
     outputSchema: GenerateExecutiveReportOutputSchema,
+    stream: true,
   },
-  async input => {
-    const {output} = await generateExecutiveReportPrompt(input);
-    if (typeof output === 'string' && output.trim().length > 0) {
-      return output;
+  async function* (input) {
+    const stream = await generateExecutiveReportPrompt.stream(input);
+    for await (const chunk of stream) {
+      yield chunk.text() ?? '';
     }
-    // Fallback seguro para cumplir el esquema de salida en caso de respuesta vacía
-    return '## Informe no disponible\n\nNo se pudo generar contenido del informe en este intento. Por favor, vuelve a intentarlo con un conjunto de registros diferente o ajusta las preguntas.';
   }
 );
