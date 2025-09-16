@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { CallEvaluation } from '@/lib/types';
+import { DATASET_CONFIG } from '@/lib/constants';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -11,11 +12,7 @@ import { CallDetails } from './call-details';
 import { Paperclip, Folder, Headset } from 'lucide-react';
 import { Label } from './ui/label';
 
-const DATASET_CONFIG = {
-  "Cobranzas Call": "resultados_evaluaciones_cobranzas.json",
-  "Cobranzas Abogados": "resultados_evaluaciones_cobranzas_abogados.json",
-  "Cobranzas Casa Mayor": "resultados_evaluaciones_cobranzas_casa_mayor.json",
-};
+// DATASET_CONFIG ahora proviene de constants para mantener consistencia con Auditbot
 
 interface EvaluationMonitorPanelProps {
   onContextUpdate: (context: string, count: number) => void;
@@ -48,20 +45,19 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
         
         // Parse the nested JSON string for each call record
         const parsedData = data.map(call => {
-            let parsedJson = {};
+          const raw = call.evaluacion_llamada_raw ?? call.evaluacion_llamada;
+          let parsedJson: any = {};
+          if (raw && typeof raw === 'string') {
             try {
-                // Only parse if the raw string exists and is not empty
-                if (call.evaluacion_llamada_raw && call.evaluacion_llamada_raw.trim() !== '') {
-                    parsedJson = JSON.parse(call.evaluacion_llamada_raw);
-                }
+              if (raw.trim().length > 0) parsedJson = JSON.parse(raw);
             } catch (parseError) {
-                console.error(`Failed to parse evaluacion_llamada_raw for call ID ${call.id_llamada_procesada}:`, parseError);
-                // Assign an empty object if parsing fails to prevent crashing
+              console.warn(`No se pudo parsear evaluacion para ID ${call.id_llamada_procesada}`);
             }
-            return {
-                ...call,
-                evaluacion_llamada_parsed: parsedJson,
-            };
+          }
+          return {
+            ...call,
+            evaluacion_llamada_parsed: parsedJson,
+          };
         });
 
         setAllCallData(parsedData);
@@ -77,14 +73,44 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
   }, [selectedDatasetFile]);
 
   useEffect(() => {
-    if (allCallData) {
-      const context = allCallData
-        .map(call => `ID: ${call.id_llamada_procesada}\nEvaluacion: ${JSON.stringify(call.evaluacion_llamada_parsed)}\n---\n`)
-        .join('');
-      onContextUpdate(context, allCallData.length);
-    } else {
-      onContextUpdate('', 0);
-    }
+    const buildContext = async () => {
+      if (allCallData) {
+        const usable = allCallData.filter(c => c.evaluacion_llamada_parsed && Object.keys(c.evaluacion_llamada_parsed).length > 0);
+        let context = usable
+          .map(call => `ID: ${call.id_llamada_procesada}\nEvaluacion: ${JSON.stringify(call.evaluacion_llamada_parsed)}\n---`)
+          .join('\n');
+        const MAX_CHARS = 25000; // umbral antes de resumir
+        if (context.length > MAX_CHARS) {
+          try {
+            const res = await fetch('/api/summarize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ context, maxChars: 8000 }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.summary) {
+                context = `**RESUMEN CONTEXTO (${usable.length} registros)**\n${data.summary}`;
+              }
+            } else {
+              console.warn('Fallo API summarize status ' + res.status);
+              context = context.slice(0, MAX_CHARS) + '\n[TRUNCADO]';
+            }
+          } catch (e) {
+            console.warn('Fallo al resumir contexto, usando versión completa truncada');
+            context = context.slice(0, MAX_CHARS) + '\n[TRUNCADO]';
+          }
+        }
+        // Persistir en localStorage (lado cliente) para reutilizar al cambiar pestañas
+        try {
+          localStorage.setItem('evaluationContextCache', context);
+        } catch {}
+        onContextUpdate(context, usable.length);
+      } else {
+        onContextUpdate('', 0);
+      }
+    };
+    buildContext();
   }, [allCallData, onContextUpdate]);
 
   const selectedCallData = useMemo(() => {

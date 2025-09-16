@@ -3,7 +3,12 @@
 import { answerQuestion, type AnswerQuestionOutput } from '@/ai/flows/ai-powered-question-answering';
 import { generateExecutiveReport, type GenerateExecutiveReportOutput } from '@/ai/flows/generate-executive-report';
 import { analyzeSentimentTrends, type SentimentAnalysisInput, type SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
-import { QUESTIONS_FOR_REPORTS } from '@/lib/constants';
+import { QUESTIONS_FOR_REPORTS, DATASET_CONFIG } from '@/lib/constants';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+// Historial en memoria (se reinicia en cada cold start del serverless/runtime)
+let chatHistory: { role: 'user' | 'assistant'; content: string }[] = [];
 import { Storage } from '@google-cloud/storage';
 import { VertexAI } from '@google-cloud/vertexai';
 
@@ -12,10 +17,50 @@ import { VertexAI } from '@google-cloud/vertexai';
  */
 export async function getChatResponse(
   question: string,
-  evaluationContext: string
+  opts: { datasetName?: string; limit?: number; rawContext?: string; reset?: boolean }
 ): Promise<AnswerQuestionOutput> {
   try {
+    let evaluationContext = opts.rawContext || '';
+    if (opts.reset) chatHistory = [];
+    // Si se provee datasetName reconstruimos el contexto enriquecido cuando no se pasa rawContext
+    if (!evaluationContext && opts.datasetName) {
+      const fileName = DATASET_CONFIG[opts.datasetName];
+      if (fileName) {
+        try {
+          const jsonPath = path.join(process.cwd(), 'public', fileName);
+          const fileRaw = await fs.readFile(jsonPath, 'utf-8');
+          const data: any[] = JSON.parse(fileRaw);
+          // Tomar todos los registros, sin filtrar por 'error', como en Auditbot
+          const limit = Math.min(opts.limit ?? 200, data.length);
+          const limited = data.slice(0, limit);
+          // Parse y extracción únicamente de campos requeridos
+          const blocks: string[] = [];
+          for (const call of limited) {
+            let parsed: any = {};
+            // Priorizar evaluacion_llamada; _raw no se usa para el contexto del informe/chat
+            const raw = call.evaluacion_llamada;
+            if (typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch {} }
+            else if (raw && typeof raw === 'object') { parsed = raw; }
+            const otros = parsed && parsed.otros_campos ? parsed.otros_campos : {};
+            blocks.push(`ID: ${call.id_llamada_procesada}\notros_campos: ${JSON.stringify(otros)}`);
+          }
+          evaluationContext = `DATASET: ${opts.datasetName} REGISTROS: ${limited.length}\n` + blocks.join('\n---\n');
+        } catch (e) {
+          console.warn('No se pudo cargar dataset para contexto Auditbot', e);
+        }
+      }
+    }
+      // Incluir historial de conversación reciente (últimos 6 turnos) recortado
+      const historyFragment = chatHistory.slice(-12).map(m => `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`).join('\n');
+      if (historyFragment) {
+        evaluationContext = `${historyFragment}\n---\n${evaluationContext}`.trim();
+      }
+      if (!evaluationContext) {
+        evaluationContext = 'No hay evaluaciones estructuradas disponibles.';
+      }
+      chatHistory.push({ role: 'user', content: question });
     const result = await answerQuestion({ question, evaluationContext });
+      chatHistory.push({ role: 'assistant', content: result.answer });
     return result;
   } catch (error) {
     console.error('Error in getChatResponse:', error);
@@ -28,19 +73,45 @@ export async function getChatResponse(
  */
 export async function getExecutiveReport(
   reportContext: string,
+  datasetName?: string,
+  questions?: string[],
 ): Promise<GenerateExecutiveReportOutput> {
-    const sourceName = 'Cobranzas Call';
-  try {
-    const result = await generateExecutiveReport({
-      sourceName,
-      reportContext,
-      questions: QUESTIONS_FOR_REPORTS,
-    });
-    return result;
-  } catch (error) {
-    console.error('Error in getExecutiveReport:', error);
-    return `## Error al Generar el Informe\n\nNo se pudo completar la generación del informe debido a un error interno. Por favor, verifica la conexión y vuelve a intentarlo.\n\n**Detalles del error:** ${error instanceof Error ? error.message : String(error)}`;
+  const sourceName = datasetName || 'Cobranzas Call';
+  const isTransientError = (e: any) => {
+    const status = (e && (e.status || e.code)) ?? undefined;
+    const msg = (e && (e.message || e.originalMessage || String(e)))?.toString().toLowerCase?.() || '';
+    return (
+      status === 503 ||
+      /503|service unavailable|overloaded|deadline|unavailable|rate|quota/.test(msg)
+    );
+  };
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+  const payload = {
+    sourceName,
+    reportContext,
+    questions: (questions && questions.length > 0) ? questions : QUESTIONS_FOR_REPORTS,
+  };
+
+  const MAX_ATTEMPTS = 3;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const result = await generateExecutiveReport(payload);
+      return result;
+    } catch (error) {
+      const last = attempt === MAX_ATTEMPTS;
+      if (!last && isTransientError(error)) {
+        const backoff = 800 * Math.pow(2, attempt - 1);
+        console.warn(`getExecutiveReport transient error (attempt ${attempt}/${MAX_ATTEMPTS}). Retrying in ${backoff}ms...`, error);
+        await delay(backoff);
+        continue;
+      }
+      console.error('Error in getExecutiveReport:', error);
+      return `## Error al Generar el Informe\n\nEl servicio de modelo se encuentra temporalmente no disponible o ocurrió un error. Por favor, intenta nuevamente en unos momentos.\n\n**Detalles:** ${error instanceof Error ? error.message : String(error)}`;
+    }
   }
+  // Fallback imposible de alcanzar, pero requerido por TS
+  return '## Error al Generar el Informe\n\nNo se pudo generar el informe.';
 }
 
 /**

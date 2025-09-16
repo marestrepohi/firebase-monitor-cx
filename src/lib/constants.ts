@@ -29,3 +29,13 @@ export const QUESTIONS_FOR_REPORTS = [
     "¿Qué tipo de acuerdo de recuperación de cartera es más rechazado por los clientes?",
     "¿Qué tipos de acuerdo de recuperación de cartera es más ofrecido vs los menos ofrecidos?",
 ];
+
+// Conjunto de datasets disponibles para evaluación y chat (Auditbot)
+// Nombre visible -> nombre de archivo esperado en /public
+export const DATASET_CONFIG: Record<string, string> = {
+    "Cobranzas Call": "resultados_evaluaciones_cobranzas.json",
+    "Cobranzas Abogados": "resultados_evaluaciones_cobranzas_abogados.json",
+    "Cobranzas Casa Mayor": "resultados_evaluaciones_cobranzas_casa_mayor.json",
+    "Cobranzas Casa Menor": "resultados_evaluaciones_cobranzas_casa_menor.json",
+    "Cobranzas Bot": "resultados_evaluaciones_cobranzas_bot.json",
+};

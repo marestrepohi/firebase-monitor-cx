@@ -30,50 +30,40 @@ const generateExecutiveReportPrompt = ai.definePrompt({
   input: {schema: GenerateExecutiveReportInputSchema},
   output: {schema: GenerateExecutiveReportOutputSchema},
   prompt: `
-        **Rol y Objetivo:**
-        Assume the role of a **Senior Strategic Analyst of Customer Experience (CX)**. Your objective is not just to answer questions, but to generate an executive report that reveals deep and actionable insights for the bank's management. The analysis should be based ONLY on the call evaluations from the '{sourceName}' dataset provided below.
+    Rol y objetivo:
+    Eres un **Analista Estratégico Senior de Experiencia del Cliente (CX)**. Debes generar un informe ejecutivo con hallazgos y recomendaciones accionables basándote SOLO en las evaluaciones de llamada del dataset '{sourceName}'.
 
-        **Context of Analysis (Call Evaluations from '{sourceName}'):**
-        ---
-        {{{reportContext}}}
-        ---
+    Formato del contexto:
+    DATASET: <nombre> REGISTROS: <n>
+    Luego bloques separados por --- con:
+    ID: <id_llamada_procesada>
+    otros_campos: { ... pares clave/valor relevantes }
 
-        **Mandatory Output Format:**
-        You must structure your response following this exact format:
+    Contexto:
+    ---
+    {{{reportContext}}}
+    ---
 
-        1.  **Executive Summary:**
-            *   An initial paragraph summarizing the 3-4 most critical findings and the main strategic recommendation. Designed so that a director can understand the situation in 60 seconds.
+    Reglas estrictas:
+    1) No inventes campos que no aparezcan en otros_campos.
+    2) Si faltan datos para responder algo, escribe exactamente: "No hay información suficiente en los registros para responder con precisión." y agrega solo fragmentos parciales útiles si existen (IDs, claves presentes).
+    3) Usa únicamente la evidencia disponible en el contexto.
+    4) Formato de salida en Markdown válido con tablas GFM cuando corresponda.
+    5) Evita repetir JSON literal completo; sintetiza claves relevantes.
 
-        2.  **Detailed Analysis by Question:**
-            *   For each of the questions listed below, provide a detailed answer.
-            *   Use bullet points to break down the key points of each answer.
+    Estructura obligatoria del informe (Markdown):
+    1. **Resumen Ejecutivo**: 3–4 hallazgos críticos y una recomendación principal.
+    2. **Análisis Detallado por Pregunta**:
+       - Responde cada pregunta listada abajo con viñetas y, cuando sea posible, cuantificaciones apoyadas en el contexto.
+    3. **Tabla de Hallazgos y Recomendaciones** (Markdown): columnas "Hallazgo Clave" | "Impacto Potencial (Cliente/Negocio)" | "Recomendación Estratégica".
 
-        3.  **Table of Insights and Strategic Recommendations:**
-            *   Create a table in Markdown format with three columns: \"Key Finding\", \"Potential Impact (Client/Business)\", and \"Strategic Recommendation\".
-            *   In this table, summarize the most important problems or opportunities and suggest concrete actions that management could consider.
+    Preguntas a responder en el análisis detallado:
+    {{#each questions}}
+    - {{{this}}}
+    {{/each}}
 
-        **Analysis Instructions:**
-        *   **Depth and Quantification:** Do not limit yourself to superficial answers. Whenever possible, quantify the findings (e.g. \"Competitor X was mentioned in 25% of relevant cases\", \"The main objection, 'high costs', appears in approximately 1 in 3 interactions on this topic\").
-        *   **Use of Evidence:** Support your claims with concrete examples or anonymous textual quotes extracted from the context to give credibility to your findings.
-        *   **Strategic Vision:** When formulating recommendations, think about the \"why\". What business strategy (retention, acquisition, operational efficiency, product improvement) does your recommendation support?
-        *   **Clarity and Format:** Use **bold** to highlight key concepts. The table should be clear and easy to read.
-        *   **Principle of Reality:** If the information in the context is not sufficient to answer a question or to generate an insight, explicitly state it as: \"There is not enough data in the context to determine...\". **DO NOT INVENT INFORMATION.**
-
-        **Questions to Answer in the Detailed Analysis Section:**
-        {{#each questions}}
-        - {{{this}}}
-        {{/each}}
-
-        **START THE REPORT NOW.**
-        **Do not generate previous messages like:**
-        Of course, here is the executive report as a Senior Strategic Analyst of Customer Experience.
-        Executive Report on Customer Experience: Analysis of Retention Calls
-        To: Executive Management From: Senior Strategic Analyst of Customer Experience (CX) Date: October 26, 2023 Subject: Critical Findings and Strategic Recommendations of the Retention Process
-        To: Executive Management From: Senior Strategic Analyst of Customer Experience (CX) Subject: Critical Findings and Strategic Recommendations Based on Call Evaluations
-
-
-        The idea is to respond directly to the report format without introductory messages.
-    `,
+    Genera el informe directamente, sin preámbulos innecesarios.
+  `,
 });
 
 const generateExecutiveReportFlow = ai.defineFlow(
@@ -84,6 +74,10 @@ const generateExecutiveReportFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await generateExecutiveReportPrompt(input);
-    return output!;
+    if (typeof output === 'string' && output.trim().length > 0) {
+      return output;
+    }
+    // Fallback seguro para cumplir el esquema de salida en caso de respuesta vacía
+    return '## Informe no disponible\n\nNo se pudo generar contenido del informe en este intento. Por favor, vuelve a intentarlo con un conjunto de registros diferente o ajusta las preguntas.';
   }
 );

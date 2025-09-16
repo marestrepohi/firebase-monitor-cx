@@ -5,16 +5,17 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import type { SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { getSentimentAnalysis } from '@/app/actions';
-import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarHeader } from '@/components/ui/sidebar';
+import { Sidebar, SidebarProvider, SidebarInset, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarHeader } from '@/components/ui/sidebar';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { ChatPanel } from '@/components/chat-panel';
 import { ReportPanel } from '@/components/report-panel';
 import { EvaluationMonitorPanel } from '@/components/evaluation-monitor-panel';
 import { TranscriptionPanel } from '@/components/transcription-panel';
 import { LookerStudioPanel } from '@/components/looker-studio-panel';
-import { MessageSquare, BarChart2, Search, Settings, AudioLines, AreaChart } from 'lucide-react';
+import { MessageSquare, BarChart2, Search, AudioLines, AreaChart } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { ConfigDialog } from '@/components/config-dialog';
+import { DATASET_CONFIG } from '@/lib/constants';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -24,6 +25,9 @@ export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [evaluationContext, setEvaluationContext] = useState('');
   const [recordCount, setRecordCount] = useState(0);
+  const [datasetName, setDatasetName] = useState('Cobranzas Call');
+  const [usableCount, setUsableCount] = useState(0);
+  const [chatResetSignal, setChatResetSignal] = useState(0);
 
   // This will be updated by the EvaluationMonitorPanel
   const handleContextUpdate = (context: string, count: number) => {
@@ -39,6 +43,39 @@ export default function Home() {
     };
     fetchSentiment();
   }, [evaluationContext, activeTab]);
+
+  // Calcular número de registros utilizables (error === null) para el dataset del chat
+  useEffect(() => {
+    const fn = async () => {
+      try {
+        const file = DATASET_CONFIG[datasetName];
+        if (!file) { setUsableCount(0); return; }
+        const res = await fetch(`/${file}`);
+        if (!res.ok) { setUsableCount(0); return; }
+        const data = await res.json();
+        const usable = Array.isArray(data) ? data.filter((d: any) => (Object.prototype.hasOwnProperty.call(d, 'error') ? d.error === null : true)) : [];
+        setUsableCount(usable.length);
+        // Ajustar recordLimit si excede
+        setRecordLimit((prev) => {
+          if (!usable.length) return 1;
+          return Math.max(1, Math.min(prev, usable.length));
+        });
+      } catch {
+        setUsableCount(0);
+      }
+    };
+    fn();
+  }, [datasetName]);
+
+  const currentTitle = activeTab === 'chat'
+    ? 'Auditbot'
+    : activeTab === 'report'
+      ? 'Generador de Informes'
+      : activeTab === 'inspector'
+        ? 'Monitor de Evaluaciones'
+        : activeTab === 'transcription'
+          ? 'Transcripción'
+          : 'Dashboards';
 
   return (
     <SidebarProvider>
@@ -59,7 +96,7 @@ export default function Home() {
                 className="mx-auto hidden group-data-[collapsible=icon]:block"
             />
         </SidebarHeader>
-        <div className="flex-1 flex flex-col">
+  <div className="flex-1 flex flex-col">
             <SidebarMenu className='flex-1'>
               <SidebarMenuItem>
                 <SidebarMenuButton 
@@ -112,27 +149,17 @@ export default function Home() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-        </div>
-         <SidebarFooter>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => setIsConfigOpen(true)} tooltip="Configuración">
-                        <Settings className="w-4 h-4" />
-                        <span>Configuración</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarFooter>
+  </div>
       </Sidebar>
-      <SidebarInset>
-        <DashboardHeader />
-        <main className="flex-1 p-4 md:p-6">
+  <SidebarInset>
+    <DashboardHeader title={currentTitle} onOpenConfig={() => setIsConfigOpen(true)} />
+    <main className="flex-1 p-2 md:p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsContent value="chat" className="mt-0">
-              <ChatPanel evaluationContext={evaluationContext} />
+    <TabsContent value="chat" className="mt-0">
+  <ChatPanel evaluationContext={evaluationContext} defaultDataset={datasetName} recordLimit={recordLimit} resetSignal={chatResetSignal} />
             </TabsContent>
             <TabsContent value="report" className="mt-0">
-              <ReportPanel reportContext={evaluationContext} recordCount={recordCount} />
+              <ReportPanel />
             </TabsContent>
             <TabsContent value="inspector" className="mt-0">
               <EvaluationMonitorPanel onContextUpdate={handleContextUpdate} />
@@ -146,12 +173,18 @@ export default function Home() {
           </Tabs>
         </main>
       </SidebarInset>
-      <ConfigDialog 
+      <ConfigDialog
         isOpen={isConfigOpen}
         onOpenChange={setIsConfigOpen}
         recordLimit={recordLimit}
         onRecordLimitChange={setRecordLimit}
-        maxRecords={recordCount}
+        maxRecords={usableCount}
+        datasetName={datasetName}
+        onDatasetChange={setDatasetName}
+        onResetConversation={() => {
+          setChatResetSignal((n) => n + 1);
+          // Reset también valores del ChatPanel a través de props ya sincronizadas
+        }}
       />
     </SidebarProvider>
   );

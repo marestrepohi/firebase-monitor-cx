@@ -27,7 +27,7 @@ const MetricCard = ({ title, value }: MetricCardProps) => (
 );
 
 interface CallDetailsProps {
-  selectedCallData: (CallEvaluation & { evaluacion_llamada_parsed: any }) | null;
+  selectedCallData: (CallEvaluation & { evaluacion_llamada_parsed?: any }) | null;
 }
 
 export function CallDetails({ selectedCallData }: CallDetailsProps) {
@@ -117,13 +117,17 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
         
         {/* Metrics */}
         <div className="space-y-2">
-            <h3 className="font-semibold">Métricas Clave</h3>
+          <h3 className="font-semibold">Métricas Clave</h3>
+          {selectedCallData.evaluacion_llamada_parsed && Object.keys(selectedCallData.evaluacion_llamada_parsed).length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                 {selectedCallData.evaluacion_llamada_parsed.precision_llamada !== undefined && <MetricCard title="Precisión Llamada" value={`${selectedCallData.evaluacion_llamada_parsed.precision_llamada}%`} />}
-                 {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente !== undefined && <MetricCard title="Error Crítico Cliente" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente === 'Sí'} isBoolean />}
-                 {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio !== undefined && <MetricCard title="Error Crítico Negocio" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio === 'Sí'} isBoolean />}
-                 {selectedCallData.evaluacion_llamada_parsed.sentimiento_general && <MetricCard title="Sentimiento" value={selectedCallData.evaluacion_llamada_parsed.sentimiento_general} />}
+              {selectedCallData.evaluacion_llamada_parsed.precision_llamada !== undefined && <MetricCard title="Precisión Llamada" value={`${selectedCallData.evaluacion_llamada_parsed.precision_llamada}%`} />}
+              {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente !== undefined && <MetricCard title="Error Crítico Cliente" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente === 'Sí'} isBoolean />}
+              {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio !== undefined && <MetricCard title="Error Crítico Negocio" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio === 'Sí'} isBoolean />}
+              {selectedCallData.evaluacion_llamada_parsed.sentimiento_general && <MetricCard title="Sentimiento" value={selectedCallData.evaluacion_llamada_parsed.sentimiento_general} />}
             </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No hay métricas disponibles para esta llamada.</p>
+          )}
         </div>
 
         <Separator />
@@ -131,11 +135,11 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
         {/* Transcription */}
         <div className="space-y-2">
             <h3 className="font-semibold flex items-center gap-2"><Type className="w-5 h-5"/> Transcripción</h3>
-            <ScrollArea className="h-48 border rounded-md bg-muted">
-                <pre className="p-4 text-sm whitespace-pre-wrap font-sans">
-                    {selectedCallData.evaluacion_llamada_parsed.transcripcion || 'No hay transcripción disponible.'}
-                </pre>
-            </ScrollArea>
+      <ScrollArea className="h-48 border rounded-md bg-muted">
+        <pre className="p-4 text-sm whitespace-pre-wrap font-sans">
+          {selectedCallData.evaluacion_llamada_parsed?.transcripcion || 'No hay transcripción disponible.'}
+        </pre>
+      </ScrollArea>
         </div>
 
         <Separator />
@@ -144,9 +148,9 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
         <div className="space-y-2">
             <h3 className="font-semibold flex items-center gap-2"><FileJson className="w-5 h-5"/> Resto de la Evaluación (JSON)</h3>
              <ScrollArea className="h-48 border rounded-md bg-muted">
-                 <pre className="p-4 text-sm whitespace-pre-wrap font-mono">
-                    {JSON.stringify(jsonForViewer, null, 2)}
-                 </pre>
+            <pre className="p-4 text-sm whitespace-pre-wrap font-mono">
+              {jsonForViewer ? JSON.stringify(jsonForViewer, null, 2) : 'No hay datos de evaluación.'}
+            </pre>
              </ScrollArea>
         </div>
       </CardContent>
