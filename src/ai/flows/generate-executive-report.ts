@@ -30,39 +30,40 @@ const generateExecutiveReportPrompt = ai.definePrompt({
   input: {schema: GenerateExecutiveReportInputSchema},
   output: {schema: GenerateExecutiveReportOutputSchema},
   prompt: `
-    Rol y objetivo:
-    Eres un **Analista Estratégico Senior de Experiencia del Cliente (CX)**. Debes generar un informe ejecutivo con hallazgos y recomendaciones accionables basándote SOLO en las evaluaciones de llamada del dataset '{sourceName}'.
+    Actúa como un Analista Estratégico Senior de Experiencia del Cliente especializado en cobranzas bancarias.
 
-    Formato del contexto:
-    DATASET: <nombre> REGISTROS: <n>
-    Luego bloques separados por --- con:
-    ID: <id_llamada_procesada>
-    otros_campos: { ... pares clave/valor relevantes }
-
-    Contexto:
-    ---
+    **CONTEXTO DE DATOS:**
+    Fuente: {{{sourceName}}}
     {{{reportContext}}}
-    ---
 
-    Reglas estrictas:
-    1) No inventes campos que no aparezcan en otros_campos.
-    2) Si faltan datos para responder algo, escribe exactamente: "No hay información suficiente en los registros para responder con precisión." y agrega solo fragmentos parciales útiles si existen (IDs, claves presentes).
-    3) Usa únicamente la evidencia disponible en el contexto.
-    4) Formato de salida en Markdown válido con tablas GFM cuando corresponda.
-    5) Evita repetir JSON literal completo; sintetiza claves relevantes.
-
-    Estructura obligatoria del informe (Markdown):
-    1. **Resumen Ejecutivo**: 3–4 hallazgos críticos y una recomendación principal.
-    2. **Análisis Detallado por Pregunta**:
-       - Responde cada pregunta listada abajo con viñetas y, cuando sea posible, cuantificaciones apoyadas en el contexto.
-    3. **Tabla de Hallazgos y Recomendaciones** (Markdown): columnas "Hallazgo Clave" | "Impacto Potencial (Cliente/Negocio)" | "Recomendación Estratégica".
-
-    Preguntas a responder en el análisis detallado:
+    **PREGUNTAS A RESPONDER:**
     {{#each questions}}
     - {{{this}}}
     {{/each}}
 
-    Genera el informe directamente, sin preámbulos innecesarios.
+    **FORMATO DEL INFORME (Markdown OBLIGATORIO):**
+
+    ## 📊 RESUMEN EJECUTIVO
+
+    ### Hallazgos Clave
+    - [Punto clave 1 extraído de los datos]
+    - [Punto clave 2 extraído de los datos]
+    - [Punto clave 3 extraído de los datos]
+
+    ### Recomendaciones Prioritarias
+    1. **[Recomendación 1 accionable y basada en hallazgos]**
+    2. **[Recomendación 2 accionable y basada en hallazgos]**
+    3. **[Recomendación 3 accionable y basada en hallazgos]**
+
+    ## 📈 ANÁLISIS DETALLADO
+
+    [A continuación, responde cada una de las preguntas listadas arriba. Para cada una, proporciona un análisis profundo, utilizando datos específicos y métricas del contexto. Estructura cada respuesta con claridad.]
+
+    **INSTRUCCIONES ESTRICTAS:**
+    - Usa **únicamente** los datos específicos proporcionados en el contexto. No inventes información.
+    - Incluye métricas cuantificables (porcentajes, conteos, promedios) siempre que sea posible para respaldar tus afirmaciones.
+    - Si para alguna pregunta no hay datos suficientes en el contexto para dar una respuesta precisa, indica claramente: "No hay información suficiente en los registros para responder con precisión."
+    - La salida debe ser exclusivamente en formato Markdown.
   `,
 });
 
