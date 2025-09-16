@@ -12,6 +12,8 @@ import { DATASET_CONFIG, QUESTIONS_FOR_REPORTS } from '@/lib/constants';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ReportConfigDialog } from './report-config-dialog';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export function ReportPanel() {
   const [report, setReport] = useState<string>('');
@@ -67,10 +69,14 @@ export function ReportPanel() {
       const blocks: string[] = [];
       for (const call of limited) {
         let parsed: any = {};
-        // Tomar exclusivamente evaluacion_llamada (como en Auditbot, y sin validar el contenido interno de otros_campos)
         const raw = call.evaluacion_llamada;
-        if (typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch {} }
-        else if (raw && typeof raw === 'object') { parsed = raw; }
+        if (typeof raw === 'string') { 
+          try { 
+            if (raw.trim().length > 0) parsed = JSON.parse(raw);
+          } catch {} 
+        } else if (raw && typeof raw === 'object') { 
+          parsed = raw; 
+        }
         const otros = parsed && parsed.otros_campos ? parsed.otros_campos : {};
         blocks.push(`ID: ${call.id_llamada_procesada}\notros_campos: ${JSON.stringify(otros)}`);
       }
@@ -83,8 +89,8 @@ export function ReportPanel() {
   const handleGenerateReport = async () => {
     setIsLoading(true);
     setReport('');
-  const context = await buildReportContext();
-  const generatedReport = await getExecutiveReport(context, datasetName, questions);
+    const context = await buildReportContext();
+    const generatedReport = await getExecutiveReport(context, datasetName, questions);
     setReport(generatedReport);
     setIsLoading(false);
   };
@@ -92,35 +98,39 @@ export function ReportPanel() {
   const exportPdf = async () => {
     if (!reportRef.current) return;
     const el = reportRef.current;
-    // Lazy import to avoid SSR issues
-    const [html2canvas, jsPDF] = await Promise.all([
-      import('html2canvas').then(m => m.default),
-      import('jspdf').then(m => (m as any).jsPDF || (m as any).default.jsPDF || (m as any).default)
-    ]);
+    
     const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
     const imgData = canvas.toDataURL('image/png');
+    
     const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = imgWidth / imgHeight;
+    
+    const canvasWidth = pdfWidth - 20; // pdf width with margin
+    const canvasHeight = canvasWidth / ratio;
 
-    let position = 0;
-    let remainingHeight = imgHeight;
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, Math.min(imgHeight, pageHeight));
-    remainingHeight -= pageHeight;
-    while (remainingHeight > 0) {
-      position = 0;
+    let heightLeft = canvasHeight;
+    let position = 10; // top margin
+
+    pdf.addImage(imgData, 'PNG', 10, position, canvasWidth, canvasHeight);
+    heightLeft -= (pdfHeight - 20);
+
+    while (heightLeft > 0) {
+      position = heightLeft - canvasHeight + 10; // next page top margin
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position - (imgHeight - remainingHeight), imgWidth, imgHeight);
-      remainingHeight -= pageHeight;
+      pdf.addImage(imgData, 'PNG', 10, position, canvasWidth, canvasHeight);
+      heightLeft -= (pdfHeight - 20);
     }
+    
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
     pdf.save(`informe-${datasetName}-${ts}.pdf`);
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full h-[84vh] md:h-[86vh] flex flex-col">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:justify-end sm:items-start gap-4">
           <div className="flex flex-wrap gap-2 w-full justify-end">
@@ -141,10 +151,10 @@ export function ReportPanel() {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="border rounded-lg min-h-[60vh]">
+      <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div className="border rounded-lg flex-1 flex flex-col">
           {isLoading && (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6 gap-2">
+            <div className="flex flex-col items-center justify-center h-full text-center p-6 gap-2">
               <div className="text-5xl mb-2 flex items-center gap-3">
                 <span className="inline-block animate-spin">⚙️</span>
                 <span>{loadingEmojis[emojiIndex]}</span>
@@ -157,7 +167,7 @@ export function ReportPanel() {
           )}
 
           {!isLoading && !report && (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6">
+            <div className="flex flex-col items-center justify-center h-full text-center p-6">
               <div className="text-3xl mb-4">📊</div>
               <h3 className="text-lg font-semibold">Tu informe aparecerá aquí</h3>
               <p className="text-muted-foreground max-w-sm">
@@ -167,7 +177,7 @@ export function ReportPanel() {
           )}
 
           {report && (
-            <ScrollArea className="h-[60vh]">
+            <ScrollArea className="flex-1">
               <div ref={reportRef} className="prose prose-sm dark:prose-invert p-6 max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{report}</ReactMarkdown>
               </div>
