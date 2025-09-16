@@ -135,14 +135,8 @@ export function ReportPanel() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-          <div>
-            <CardTitle className="font-headline">Generador de Informes</CardTitle>
-            <CardDescription>
-              Fuente: {datasetName} • Registros: {Math.min(recordLimit, Math.max(0, usableCount))} / {Math.max(0, usableCount)}
-            </CardDescription>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row sm:justify-end sm:items-start gap-4">
+          <div className="flex flex-wrap gap-2 w-full justify-end">
             <Button variant="outline" onClick={() => setIsConfigOpen(true)}>
               <Settings2 className="mr-2 h-4 w-4" /> Configurar
             </Button>
