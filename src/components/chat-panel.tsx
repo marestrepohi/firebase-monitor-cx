@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -159,7 +159,7 @@ export function ChatPanel({ evaluationContext, defaultDataset, recordLimit, rese
               >
                 {message.role === 'assistant' && (
                   <Avatar className="w-8 h-8 border">
-                    <AvatarImage src="https://static.wikia.nocookie.net/logopedia/images/1/1c/BancodeBogot%C3%A12008verticalplane.svg/revision/latest/scale-to-width-down/32?cb=20240518224319&path-prefix=es" alt="Auditbot" />
+                    <AvatarImage src="https://www.credilemon.com/img/logo/co/banco-de-bogota.webp" alt="Auditbot" />
                     <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                 )}
@@ -176,6 +176,13 @@ export function ChatPanel({ evaluationContext, defaultDataset, recordLimit, rese
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
+                          p: (props: {node?: any; children?: ReactNode}) => {
+                              const { node, children } = props;
+                              if (node?.children[0]?.tagName === "code") {
+                                  return <div>{children}</div>;
+                              }
+                              return <p>{children}</p>;
+                          },
                           a: ({href, children, ...props}) => (
                             <a
                               href={href}
@@ -223,7 +230,7 @@ export function ChatPanel({ evaluationContext, defaultDataset, recordLimit, rese
             {isLoading && (
                <div className='flex items-start gap-3 justify-start'>
                   <Avatar className="w-8 h-8 border">
-                    <AvatarImage src="https://static.wikia.nocookie.net/logopedia/images/1/1c/BancodeBogot%C3%A12008verticalplane.svg/revision/latest/scale-to-width-down/32?cb=20240518224319&path-prefix=es" alt="Auditbot" />
+                    <AvatarImage src="https://www.credilemon.com/img/logo/co/banco-de-bogota.webp" alt="Auditbot" />
                     <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                   <div className='bg-muted rounded-lg p-3 flex items-center gap-2'>
