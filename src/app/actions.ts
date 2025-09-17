@@ -77,14 +77,13 @@ export async function getExecutiveReport(
   datasetName?: string,
   questions?: string[],
 ): Promise<string> {
-  const sourceName = datasetName || 'Cobranzas Call';
-  const payload = {
-    sourceName,
-    reportContext,
-    questions: (questions && questions.length > 0) ? questions : QUESTIONS_FOR_REPORTS,
-  };
-
   try {
+    const sourceName = datasetName || 'Cobranzas Call';
+    const payload = {
+      sourceName,
+      reportContext,
+      questions: (questions && questions.length > 0) ? questions : QUESTIONS_FOR_REPORTS,
+    };
     const report = await genExecReport(payload);
     return report;
   } catch (error) {
@@ -93,6 +92,7 @@ export async function getExecutiveReport(
     return `## Error al Generar el Informe\n\nNo se pudo generar el informe.\n\n**Detalles:** ${errorMessage}`;
   }
 }
+
 
 /**
  * Analyzes and aggregates sentiment trends from call details.
