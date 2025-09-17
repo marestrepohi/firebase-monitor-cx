@@ -2,7 +2,7 @@
 'use server';
 
 import { answerQuestion, type AnswerQuestionOutput } from '@/ai/flows/ai-powered-question-answering';
-import { generateExecutiveReport } from '@/ai/flows/generate-executive-report';
+import { generateExecutiveReport as genExecReport } from '@/ai/flows/generate-executive-report';
 import { analyzeSentimentTrends, type SentimentAnalysisInput, type SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
 import { QUESTIONS_FOR_REPORTS, DATASET_CONFIG } from '@/lib/constants';
 import fs from 'node:fs/promises';
@@ -85,7 +85,7 @@ export async function getExecutiveReport(
   };
 
   try {
-    const report = await generateExecutiveReport(payload);
+    const report = await genExecReport(payload);
     return report;
   } catch (error) {
     console.error('Error in getExecutiveReport action:', error);

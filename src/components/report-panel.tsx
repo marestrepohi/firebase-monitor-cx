@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { generateExecutiveReport } from '@/app/actions';
+import { getExecutiveReport } from '@/app/actions';
 import { ReportConfigDialog } from '@/components/report-config-dialog';
 import { QUESTIONS_FOR_REPORTS } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,11 +36,7 @@ export function ReportPanel({
     setIsGenerating(true);
     setReport('');
     try {
-      const result = await generateExecutiveReport({
-        sourceName: datasetName,
-        reportContext: evaluationContext,
-        questions,
-      });
+      const result = await getExecutiveReport(evaluationContext, datasetName, questions);
       setReport(result);
       setReportOpen(true);
     } catch (error) {
