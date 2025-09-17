@@ -16,7 +16,7 @@ const generateExecutiveReportPrompt = ai.definePrompt({
   name: 'generateExecutiveReportPrompt',
   input: {schema: GenerateExecutiveReportInputSchema},
   output: {schema: GenerateExecutiveReportOutputSchema},
-  model: 'googleai/gemini-2.5-flash', // Using a more powerful model for reports
+  model: 'googleai/gemini-2.5-flash', // Hardcoding for stability
   prompt: `
     Actúa como un Analista Estratégico Senior de Experiencia del Cliente especializado en cobranzas bancarias.
 
@@ -62,8 +62,15 @@ const generateExecutiveReportFlow = ai.defineFlow(
     outputSchema: GenerateExecutiveReportOutputSchema,
   },
   async (input) => {
+    // Directly call the prompt with the input, simplifying the flow.
     const {output} = await generateExecutiveReportPrompt(input);
-    return output!;
+    
+    // Basic check for null/undefined response.
+    if (output === null || output === undefined) {
+        console.error("LLM returned null output.");
+        return "Error: La IA no generó una respuesta.";
+    }
+    return output;
   }
 );
 

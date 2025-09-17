@@ -163,7 +163,14 @@ export default function Home() {
   <ChatPanel evaluationContext={evaluationContext} defaultDataset={datasetName} recordLimit={recordLimit} resetSignal={chatResetSignal} />
             </TabsContent>
             <TabsContent value="report" className="mt-0">
-              <ReportPanel />
+              <ReportPanel 
+                datasetName={datasetName}
+                setDatasetName={setDatasetName}
+                recordLimit={recordLimit}
+                setRecordLimit={setRecordLimit}
+                evaluationContext={evaluationContext}
+                maxRecords={usableCount}
+              />
             </TabsContent>
             <TabsContent value="inspector" className="mt-0">
               <EvaluationMonitorPanel onContextUpdate={handleContextUpdate} />
