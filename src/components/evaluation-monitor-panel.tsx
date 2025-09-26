@@ -4,7 +4,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { CallEvaluation } from '@/lib/types';
 import { DATASET_CONFIG } from '@/lib/constants';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { normalizeEvaluation, buildEvaluationContext } from '@/lib/evaluations';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
@@ -17,13 +18,21 @@ import { Label } from './ui/label';
 interface EvaluationMonitorPanelProps {
   onContextUpdate: (context: string, count: number) => void;
 }
-
 export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPanelProps) {
-  const [selectedDatasetFile, setSelectedDatasetFile] = useState<string | null>(null);
+  const datasetEntries = useMemo(() => Object.entries(DATASET_CONFIG), []);
+  const [selectedDatasetFile, setSelectedDatasetFile] = useState<string | null>(
+    () => datasetEntries[0]?.[1] ?? null
+  );
   const [allCallData, setAllCallData] = useState<CallEvaluation[] | null>(null);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedDatasetName = useMemo(() => {
+    if (!selectedDatasetFile) return null;
+    const entry = datasetEntries.find(([, file]) => file === selectedDatasetFile);
+    return entry ? entry[0] : null;
+  }, [datasetEntries, selectedDatasetFile]);
 
   useEffect(() => {
     if (!selectedDatasetFile) return;
@@ -42,25 +51,20 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: CallEvaluation[] = await response.json();
-        
-        // Parse the nested JSON string for each call record
+
         const parsedData = data.map(call => {
-          const raw = call.evaluacion_llamada_raw ?? call.evaluacion_llamada;
-          let parsedJson: any = {};
-          if (raw && typeof raw === 'string') {
-            try {
-              if (raw.trim().length > 0) parsedJson = JSON.parse(raw);
-            } catch (parseError) {
-              console.warn(`No se pudo parsear evaluacion para ID ${call.id_llamada_procesada}`);
-            }
-          }
+          const rawEvaluation = call.evaluacion_llamada_raw ?? call.evaluacion_llamada;
+          const normalized = normalizeEvaluation(rawEvaluation ?? undefined);
           return {
             ...call,
-            evaluacion_llamada_parsed: parsedJson,
+            evaluacion_llamada_parsed: normalized,
           };
         });
 
         setAllCallData(parsedData);
+        if (parsedData.length) {
+          setSelectedCallId(parsedData[0].id_llamada_procesada || parsedData[0].id_cliente || null);
+        }
       } catch (e) {
         console.error("Failed to load or parse evaluation data:", e);
         setError(`Error al cargar los datos. Verifique que el archivo '${selectedDatasetFile}' exista en la carpeta 'public' y tenga el formato correcto.`);
@@ -75,10 +79,21 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
   useEffect(() => {
     const buildContext = async () => {
       if (allCallData) {
-        const usable = allCallData.filter(c => c.evaluacion_llamada_parsed && Object.keys(c.evaluacion_llamada_parsed).length > 0);
-        let context = usable
-          .map(call => `ID: ${call.id_llamada_procesada}\nEvaluacion: ${JSON.stringify(call.evaluacion_llamada_parsed)}\n---`)
-          .join('\n');
+          const usable = allCallData.filter(
+            c => c.evaluacion_llamada_parsed && c.evaluacion_llamada_parsed.hasData
+          );
+          if (!usable.length) {
+            onContextUpdate('', 0);
+            return;
+          }
+          let context = buildEvaluationContext(
+            usable.map(call => ({
+              id: call.id_llamada_procesada,
+              dataset: selectedDatasetName ?? undefined,
+              evaluation: call.evaluacion_llamada_parsed!,
+            })),
+            { includeTranscription: false }
+          );
         const MAX_CHARS = 25000; // umbral antes de resumir
         if (context.length > MAX_CHARS) {
           try {
@@ -111,7 +126,7 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
       }
     };
     buildContext();
-  }, [allCallData, onContextUpdate]);
+  }, [allCallData, onContextUpdate, selectedDatasetName]);
 
   const selectedCallData = useMemo(() => {
     if (!allCallData || !selectedCallId) return null;
@@ -129,12 +144,12 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
                 <CardContent className="space-y-4">
                      <div>
                         <Label htmlFor="dataset-select">📂 Seleccione tipo de evaluación</Label>
-                        <Select onValueChange={(value) => setSelectedDatasetFile(value)}>
+            <Select value={selectedDatasetFile ?? undefined} onValueChange={(value) => setSelectedDatasetFile(value)}>
                             <SelectTrigger id="dataset-select">
                                 <SelectValue placeholder="Seleccionar conjunto de datos" />
                             </SelectTrigger>
                             <SelectContent>
-                                {Object.entries(DATASET_CONFIG).map(([name, file]) => (
+                {datasetEntries.map(([name, file]) => (
                                     <SelectItem key={file} value={file}>{name}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -167,7 +182,7 @@ export function EvaluationMonitorPanel({ onContextUpdate }: EvaluationMonitorPan
                 </CardHeader>
                 <CardContent>
                     <div className="text-sm space-y-2">
-                        <p><strong>Dataset:</strong> {Object.keys(DATASET_CONFIG).find(key => DATASET_CONFIG[key as keyof typeof DATASET_CONFIG] === selectedDatasetFile) || 'N/A'}</p>
+            <p><strong>Dataset:</strong> {selectedDatasetName || 'N/A'}</p>
                         <p><strong>Total de Llamadas:</strong> {allCallData?.length ?? 0}</p>
                     </div>
                 </CardContent>

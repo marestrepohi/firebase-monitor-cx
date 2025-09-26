@@ -4,14 +4,78 @@
 import { answerQuestion, type AnswerQuestionOutput } from '@/ai/flows/ai-powered-question-answering';
 import { generateExecutiveReport as genExecReport } from '@/ai/flows/generate-executive-report';
 import { analyzeSentimentTrends, type SentimentAnalysisInput, type SentimentAnalysisOutput } from '@/ai/flows/sentiment-analysis-aggregation';
-import { QUESTIONS_FOR_REPORTS, DATASET_CONFIG } from '@/lib/constants';
+import { DATASET_CONFIG, DEFAULT_DATASET, getQuestionsForDataset } from '@/lib/constants';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Storage } from '@google-cloud/storage';
 import { VertexAI } from '@google-cloud/vertexai';
+import { buildEvaluationContext, normalizeEvaluation, type EvaluationContextItem, type BuildEvaluationContextOptions } from '@/lib/evaluations';
+import { summarizeContext } from '@/ai/flows/summarize-context';
 
 // Historial en memoria (se reinicia en cada cold start del serverless/runtime)
 let chatHistory: { role: 'user' | 'assistant'; content: string }[] = [];
+
+const MAX_CONTEXT_LENGTH = 20000;
+const SUMMARY_TARGET_LENGTH = 8000;
+
+async function createDatasetContext(
+  datasetName: string,
+  limit?: number,
+  options?: BuildEvaluationContextOptions
+): Promise<{ context: string; count: number }> {
+  const fileName = DATASET_CONFIG[datasetName];
+  if (!fileName) {
+    return { context: '', count: 0 };
+  }
+
+  try {
+    const jsonPath = path.join(process.cwd(), 'public', fileName);
+    const fileRaw = await fs.readFile(jsonPath, 'utf-8');
+    const data: any[] = JSON.parse(fileRaw);
+    const finalLimit = Math.min(limit ?? data.length, data.length);
+    const items: EvaluationContextItem[] = data
+      .slice(0, finalLimit)
+      .map((call) => {
+        const evaluation = normalizeEvaluation(
+          call.evaluacion_llamada ?? call.evaluacion_llamada_raw ?? null
+        );
+        const id =
+          call.id_llamada_procesada ||
+          call.id_llamada ||
+          call.id ||
+          `registro_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        return {
+          id,
+          dataset: datasetName,
+          evaluation,
+        };
+      })
+      .filter((item) => item.evaluation.hasData);
+
+    if (!items.length) {
+      return { context: '', count: 0 };
+    }
+
+    const body = buildEvaluationContext(items, options);
+    const header = `DATASET: ${datasetName} REGISTROS: ${items.length}`;
+    let context = body ? `${header}\n${body}` : header;
+
+    if (context.length > MAX_CONTEXT_LENGTH) {
+      try {
+        const summary = await summarizeContext(context, SUMMARY_TARGET_LENGTH);
+        context = `RESUMEN (${datasetName}, ${items.length} registros)\n${summary}`;
+      } catch (summaryError) {
+        console.warn('Fallo al resumir contexto, aplicando truncado', summaryError);
+        context = `${context.slice(0, SUMMARY_TARGET_LENGTH)}\n[TRUNCADO]`;
+      }
+    }
+
+    return { context, count: items.length };
+  } catch (error) {
+    console.warn('No se pudo cargar dataset para contexto', datasetName, error);
+    return { context: '', count: 0 };
+  }
+}
 
 /**
  * Answers a user's question based on the provided evaluation context.
@@ -24,32 +88,15 @@ export async function getChatResponse(
     let evaluationContext = opts.rawContext || '';
     if (opts.reset) chatHistory = [];
     // Si se provee datasetName reconstruimos el contexto enriquecido cuando no se pasa rawContext
-    if (!evaluationContext && opts.datasetName) {
-      const fileName = DATASET_CONFIG[opts.datasetName];
-      if (fileName) {
-        try {
-          const jsonPath = path.join(process.cwd(), 'public', fileName);
-          const fileRaw = await fs.readFile(jsonPath, 'utf-8');
-          const data: any[] = JSON.parse(fileRaw);
-          // Tomar todos los registros, sin filtrar por 'error', como en Auditbot
-          const limit = Math.min(opts.limit ?? 200, data.length);
-          const limited = data.slice(0, limit);
-          // Parse y extracción únicamente de campos requeridos
-          const blocks: string[] = [];
-          for (const call of limited) {
-            let parsed: any = {};
-            // Priorizar evaluacion_llamada; _raw no se usa para el contexto del informe/chat
-            const raw = call.evaluacion_llamada;
-            if (typeof raw === 'string') { try { parsed = JSON.parse(raw); } catch {} }
-            else if (raw && typeof raw === 'object') { parsed = raw; }
-            const otros = parsed && parsed.otros_campos ? parsed.otros_campos : {};
-            blocks.push(`ID: ${call.id_llamada_procesada}\notros_campos: ${JSON.stringify(otros)}`);
-          }
-          evaluationContext = `DATASET: ${opts.datasetName} REGISTROS: ${limited.length}\n` + blocks.join('\n---\n');
-        } catch (e) {
-          console.warn('No se pudo cargar dataset para contexto Auditbot', e);
-        }
-      }
+    if (!evaluationContext) {
+      const datasetKey = opts.datasetName && DATASET_CONFIG[opts.datasetName]
+        ? opts.datasetName
+        : DEFAULT_DATASET;
+      const limit = opts.limit ?? 200;
+      const { context } = await createDatasetContext(datasetKey, limit, {
+        includeTranscription: false,
+      });
+      evaluationContext = context;
     }
       // Incluir historial de conversación reciente (últimos 6 turnos) recortado
       const historyFragment = chatHistory.slice(-12).map(m => `${m.role === 'user' ? 'Usuario' : 'Asistente'}: ${m.content}`).join('\n');
@@ -76,13 +123,30 @@ export async function getExecutiveReport(
   reportContext: string,
   datasetName?: string,
   questions?: string[],
+  limit?: number,
 ): Promise<string> {
   try {
-    const sourceName = datasetName || 'Cobranzas Call';
+    const sourceName = datasetName && DATASET_CONFIG[datasetName] ? datasetName : DEFAULT_DATASET;
+    const resolvedQuestions = questions && questions.length ? questions : getQuestionsForDataset(sourceName);
+
+    let context = reportContext;
+    if (!context) {
+      const cappedLimit = limit ?? 500;
+      const { context: generated } = await createDatasetContext(sourceName, cappedLimit, {
+        includeTranscription: true,
+        transcriptionLimit: 2000,
+      });
+      context = generated;
+    }
+
+    if (!context) {
+      throw new Error('No se encontraron evaluaciones estructuradas para generar el informe.');
+    }
+
     const payload = {
       sourceName,
-      reportContext,
-      questions: (questions && questions.length > 0) ? questions : QUESTIONS_FOR_REPORTS,
+      reportContext: context,
+      questions: resolvedQuestions,
     };
     const report = await genExecReport(payload);
     return report;

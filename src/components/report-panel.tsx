@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getExecutiveReport } from '@/app/actions';
 import { ReportConfigDialog } from '@/components/report-config-dialog';
-import { QUESTIONS_FOR_REPORTS } from '@/lib/constants';
+import { getQuestionsForDataset } from '@/lib/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import ReactMarkdown from 'react-markdown';
@@ -30,13 +30,18 @@ export function ReportPanel({
   const [report, setReport] = useState('');
   const [isConfigOpen, setConfigOpen] = useState(false);
   const [isReportOpen, setReportOpen] = useState(false);
-  const [questions, setQuestions] = useState(QUESTIONS_FOR_REPORTS);
+  const availableQuestions = useMemo(() => getQuestionsForDataset(datasetName), [datasetName]);
+  const [questions, setQuestions] = useState<string[]>(availableQuestions);
+
+  useEffect(() => {
+    setQuestions(availableQuestions);
+  }, [availableQuestions]);
   
   const handleGenerateReport = async () => {
     setIsGenerating(true);
     setReport('');
     try {
-      const result = await getExecutiveReport(evaluationContext, datasetName, questions);
+  const result = await getExecutiveReport(evaluationContext, datasetName, questions, recordLimit);
       setReport(result);
       setReportOpen(true);
     } catch (error) {
@@ -57,7 +62,7 @@ export function ReportPanel({
           Usa el panel lateral para configurar la fuente de datos y las preguntas.
         </p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center">
-          <Button onClick={handleGenerateReport} disabled={isGenerating || !evaluationContext.length}>
+          <Button onClick={handleGenerateReport} disabled={isGenerating}>
             {isGenerating ? 'Generando...' : 'Generar Informe'}
           </Button>
           <Button variant="outline" onClick={() => setConfigOpen(true)}>Configurar Informe</Button>
@@ -72,6 +77,7 @@ export function ReportPanel({
         maxRecords={maxRecords}
         datasetName={datasetName}
         onDatasetChange={setDatasetName}
+        availableQuestions={availableQuestions}
         questions={questions}
         onQuestionsChange={setQuestions}
       />

@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
 import { Headset, MicOff, FileJson, Type } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Alert } from './ui/alert';
 
 interface MetricCardProps {
     title: string;
@@ -27,7 +27,7 @@ const MetricCard = ({ title, value }: MetricCardProps) => (
 );
 
 interface CallDetailsProps {
-  selectedCallData: (CallEvaluation & { evaluacion_llamada_parsed?: any }) | null;
+  selectedCallData: CallEvaluation | null;
 }
 
 export function CallDetails({ selectedCallData }: CallDetailsProps) {
@@ -64,17 +64,49 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
     fetchAudio();
   }, [selectedCallData]);
 
-  const metrics = useMemo(() => {
-    if (!selectedCallData?.evaluacion_llamada_parsed) return [];
-    const { transcripcion, ...rest } = selectedCallData.evaluacion_llamada_parsed;
-    return Object.entries(rest);
-  }, [selectedCallData]);
+  const evaluation = selectedCallData?.evaluacion_llamada_parsed;
 
-  const jsonForViewer = useMemo(() => {
-    if (!selectedCallData?.evaluacion_llamada_parsed) return null;
-    const { transcripcion, precision_llamada, precision_error_critico_cliente, precision_error_critico_negocio, ...rest } = selectedCallData.evaluacion_llamada_parsed;
-    return rest;
-  }, [selectedCallData]);
+  const metricItems = useMemo(() => {
+    if (!evaluation) return [];
+    const { metrics } = evaluation;
+    const items: { title: string; value: string | number | boolean; isBoolean?: boolean }[] = [];
+    if (metrics.precision_llamada != null) {
+      items.push({ title: 'Precisión Llamada', value: `${metrics.precision_llamada}%` });
+    }
+    if (metrics.precision_error_critico_cliente != null) {
+      items.push({ title: 'Error Crítico Cliente', value: !!metrics.precision_error_critico_cliente, isBoolean: true });
+    }
+    if (metrics.precision_error_critico_negocio != null) {
+      items.push({ title: 'Error Crítico Negocio', value: !!metrics.precision_error_critico_negocio, isBoolean: true });
+    }
+    if (metrics.precision_error_critico_cumplimiento != null) {
+      items.push({ title: 'Error Crítico Cumplimiento', value: !!metrics.precision_error_critico_cumplimiento, isBoolean: true });
+    }
+    if (metrics.precision_error_no_critico != null) {
+      items.push({ title: 'Error No Crítico', value: !!metrics.precision_error_no_critico, isBoolean: true });
+    }
+    return items;
+  }, [evaluation]);
+
+  const otrosCampos = useMemo(() => {
+    if (!evaluation) return {} as Record<string, unknown>;
+    return evaluation.otrosCampos;
+  }, [evaluation]);
+
+  const categoriesPayload = useMemo(() => {
+    if (!evaluation) return {} as Record<string, unknown>;
+    return evaluation.categories;
+  }, [evaluation]);
+
+  const rawPayload = useMemo(() => {
+    if (!evaluation || !evaluation.raw) return null;
+    if (typeof evaluation.raw === 'string') return evaluation.raw;
+    const clone = { ...(evaluation.raw as Record<string, unknown>) };
+    delete clone.TRANSCRIPCION;
+    delete clone.Transcripcion;
+    delete clone.transcripcion;
+    return clone;
+  }, [evaluation]);
 
   if (!selectedCallData) {
     return (
@@ -118,12 +150,11 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
         {/* Metrics */}
         <div className="space-y-2">
           <h3 className="font-semibold">Métricas Clave</h3>
-          {selectedCallData.evaluacion_llamada_parsed && Object.keys(selectedCallData.evaluacion_llamada_parsed).length > 0 ? (
+          {metricItems.length ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {selectedCallData.evaluacion_llamada_parsed.precision_llamada !== undefined && <MetricCard title="Precisión Llamada" value={`${selectedCallData.evaluacion_llamada_parsed.precision_llamada}%`} />}
-              {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente !== undefined && <MetricCard title="Error Crítico Cliente" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_cliente === 'Sí'} isBoolean />}
-              {selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio !== undefined && <MetricCard title="Error Crítico Negocio" value={selectedCallData.evaluacion_llamada_parsed.precision_error_critico_negocio === 'Sí'} isBoolean />}
-              {selectedCallData.evaluacion_llamada_parsed.sentimiento_general && <MetricCard title="Sentimiento" value={selectedCallData.evaluacion_llamada_parsed.sentimiento_general} />}
+              {metricItems.map((item) => (
+                <MetricCard key={item.title} title={item.title} value={item.value} isBoolean={item.isBoolean} />
+              ))}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No hay métricas disponibles para esta llamada.</p>
@@ -137,19 +168,53 @@ export function CallDetails({ selectedCallData }: CallDetailsProps) {
             <h3 className="font-semibold flex items-center gap-2"><Type className="w-5 h-5"/> Transcripción</h3>
       <ScrollArea className="h-48 border rounded-md bg-muted">
         <pre className="p-4 text-sm whitespace-pre-wrap font-sans">
-          {selectedCallData.evaluacion_llamada_parsed?.transcripcion || 'No hay transcripción disponible.'}
+          {evaluation?.transcripcion || 'No hay transcripción disponible.'}
         </pre>
       </ScrollArea>
         </div>
 
         <Separator />
 
+        {/* Otros Campos */}
+        {Object.keys(otrosCampos).length > 0 && (
+          <>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Otros Campos Relevantes</h3>
+              <ScrollArea className="h-48 border rounded-md bg-muted">
+                <pre className="p-4 text-sm whitespace-pre-wrap font-mono">
+                  {JSON.stringify(otrosCampos, null, 2)}
+                </pre>
+              </ScrollArea>
+            </div>
+            <Separator />
+          </>
+        )}
+
+        {/* Categorías */}
+        {Object.keys(categoriesPayload).length > 0 && (
+          <>
+            <div className="space-y-2">
+              <h3 className="font-semibold">Hallazgos por Categoría</h3>
+              <ScrollArea className="h-48 border rounded-md bg-muted">
+                <pre className="p-4 text-sm whitespace-pre-wrap font-mono">
+                  {JSON.stringify(categoriesPayload, null, 2)}
+                </pre>
+              </ScrollArea>
+            </div>
+            <Separator />
+          </>
+        )}
+
         {/* JSON Viewer */}
         <div className="space-y-2">
             <h3 className="font-semibold flex items-center gap-2"><FileJson className="w-5 h-5"/> Resto de la Evaluación (JSON)</h3>
              <ScrollArea className="h-48 border rounded-md bg-muted">
             <pre className="p-4 text-sm whitespace-pre-wrap font-mono">
-              {jsonForViewer ? JSON.stringify(jsonForViewer, null, 2) : 'No hay datos de evaluación.'}
+              {rawPayload
+                ? (typeof rawPayload === 'string'
+                    ? rawPayload
+                    : JSON.stringify(rawPayload, null, 2))
+                : 'No hay datos de evaluación.'}
             </pre>
              </ScrollArea>
         </div>

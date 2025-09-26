@@ -15,7 +15,7 @@ import { LookerStudioPanel } from '@/components/looker-studio-panel';
 import { MessageSquare, BarChart2, Search, AudioLines, AreaChart } from 'lucide-react';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { ConfigDialog } from '@/components/config-dialog';
-import { DATASET_CONFIG } from '@/lib/constants';
+import { DATASET_CONFIG, DEFAULT_DATASET } from '@/lib/constants';
 
 export default function Home() {
   const [recordLimit, setRecordLimit] = useState(50);
@@ -25,7 +25,7 @@ export default function Home() {
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [evaluationContext, setEvaluationContext] = useState('');
   const [recordCount, setRecordCount] = useState(0);
-  const [datasetName, setDatasetName] = useState('Cobranzas Call');
+  const [datasetName, setDatasetName] = useState(DEFAULT_DATASET);
   const [usableCount, setUsableCount] = useState(0);
   const [chatResetSignal, setChatResetSignal] = useState(0);
 

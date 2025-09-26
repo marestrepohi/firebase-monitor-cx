@@ -8,8 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { SidebarControls } from './sidebar-controls';
-import { useMemo, useState } from 'react';
-import { QUESTIONS_FOR_REPORTS } from '@/lib/constants';
+import { useState } from 'react';
 
 interface ReportConfigDialogProps {
   isOpen: boolean;
@@ -19,6 +18,7 @@ interface ReportConfigDialogProps {
   maxRecords: number;
   datasetName: string;
   onDatasetChange: (name: string) => void;
+  availableQuestions: string[];
   questions: string[];
   onQuestionsChange: (qs: string[]) => void;
 }
@@ -31,11 +31,11 @@ export function ReportConfigDialog({
   maxRecords,
   datasetName,
   onDatasetChange,
+  availableQuestions,
   questions,
   onQuestionsChange,
 }: ReportConfigDialogProps) {
   const [newQuestion, setNewQuestion] = useState('');
-  const defaults = useMemo(() => QUESTIONS_FOR_REPORTS, []);
 
   const toggleQuestion = (q: string) => {
     if (questions.includes(q)) {
@@ -72,7 +72,7 @@ export function ReportConfigDialog({
           <div className="mt-6 space-y-3">
             <h4 className="text-sm font-medium">Preguntas del informe</h4>
             <div className="max-h-64 overflow-auto border rounded-md p-2 space-y-2">
-              {defaults.map((q) => (
+              {availableQuestions.map((q) => (
                 <label key={q} className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -104,7 +104,7 @@ export function ReportConfigDialog({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => onQuestionsChange(defaults)}
+                onClick={() => onQuestionsChange([...availableQuestions])}
                 className="h-8 px-3 rounded-md border text-xs"
                 title="Restaurar la lista de preguntas al conjunto por defecto"
               >Restaurar preguntas por defecto</button>

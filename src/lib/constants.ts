@@ -1,41 +1,57 @@
-export const QUESTIONS_FOR_REPORTS = [
-    "¿Cuál es la tasa de promesas de pago del asesor?",
-    "¿Qué palabras o frases usan los asesores con mayor tasa de promesas de pago?",
-    "¿Qué palabras usa el asesor que logra más acuerdos de recuperación de cartera?",
-    "¿Cuántas llamadas terminan en acuerdos vs sin acuerdos?",
-    "¿Qué duración promedio tienen las llamadas más exitosas vs no exitosas?",
-    "¿Qué emociones predominan en las llamadas exitosas?",
-    "¿Qué porcentaje de llamadas muestran al cliente enojado, frustrado o ansioso?",
-    "¿En qué franja de mora y en que horarios de gestión hay más llamadas con emociones negativas y positivas?",
-    "¿Qué emociones predominan en las llamadas de rechazo?",
-    "¿Cuáles son las palabras que más generan rechazo o inconformidad en el cliente?",
-    "¿Cuál es el sentimiento promedio de las llamadas en los diferentes horarios de llamada?",
-    "¿Qué objeciones son más frecuentes en los clientes?",
-    "¿Cuáles son las objeciones más frecuentes de los clientes?",
-    "¿En que etapa de la llamada aparecen más objeciones?",
-    "¿Qué asesores manejan mejor las objeciones?",
-    "¿Cuántas llamadas terminan en perdida de calma con los clientes?",
-    "¿Qué frases están asociadas a discusiones con los clientes?",
-    "¿Qué duración promedio tienen las llamadas no efectivas?",
-    "¿En qué momento se pierde más tiempo dentro de la llamada?",
-    "¿Cuánto tiempo de silencio hay por llamada y quién lo genera?",
-    "¿A qué horas del día hay llamadas efectivas?",
-    "¿Cuántas llamadas se hacen en promedio por asesor sin resultado?",
-    "¿Qué objeciones predominan en cartera temprana vs cartera castigada?",
-    "¿Qué franja tiene mayor carga emocional negativa?",
-    "¿Qué días de la semana hay más promesas de pago?",
-    "¿Qué tipo de producto genera más conflicto?",
-    "¿Qué tipo de acuerdo de recuperación de cartera es más solicitado y aceptado por los clientes?",
-    "¿Qué tipo de acuerdo de recuperación de cartera es más rechazado por los clientes?",
-    "¿Qué tipos de acuerdo de recuperación de cartera es más ofrecido vs los menos ofrecidos?",
-];
-
-// Conjunto de datasets disponibles para evaluación y chat (Auditbot)
-// Nombre visible -> nombre de archivo esperado en /public
 export const DATASET_CONFIG: Record<string, string> = {
-    "Cobranzas Call": "resultados_evaluaciones_cobranzas.json",
-    "Cobranzas Abogados": "resultados_evaluaciones_cobranzas_abogados.json",
-    "Cobranzas Casa Mayor": "resultados_evaluaciones_cobranzas_casa_mayor.json",
-    "Cobranzas Casa Menor": "resultados_evaluaciones_cobranzas_casa_menor.json",
-    "Cobranzas Bot": "resultados_evaluaciones_cobranzas_bot.json",
+    Servicios: 'resultados_evaluaciones_servicios_servicios.json',
+    Preferente: 'resultados_evaluaciones_servicios_preferente.json',
+    'Retención': 'resultados_evaluaciones_servicios_retencion.json',
+    Bloqueos: 'resultados_evaluaciones_servicios_bloqueos.json',
 };
+
+export const DEFAULT_DATASET = 'Servicios';
+
+export const QUESTIONS_FOR_REPORTS: Record<string, string[]> = {
+    'Retención': [
+        '¿Por qué los clientes prefieren la competencia?',
+        '¿Cuál es la principal objeción de los clientes?',
+        '¿Qué bancos de la competencia prefieren los clientes?',
+        '¿Cuáles son las mejores prácticas del asesor?',
+        '¿En qué momentos se tienen mayores tiempos de espera?',
+        '¿Cuál es el tiempo promedio del proceso de retención?',
+        '¿Cuál es el tiempo promedio de una venta cruzada?',
+        '¿En promedio cuántas veces se rebaten objeciones a los clientes?',
+    ],
+    Servicios: [
+        '¿Qué es lo que más aprecia el cliente en el contacto? (Ej: Agilidad, amabilidad, solución, otras)',
+        '¿Cuáles son las 3 características o el patrón de las llamadas más exitosas?',
+        '¿Cuál es el principal del dolor que el cliente manifiesta en los contactos? (Ej: demoras, complejidad, transferencias, falta de empatía, falta de conocimiento)',
+        '¿Cuál es la causa de más llamadas? (Ej: si es consulta de movimientos, ¿qué activa la llamada?, una transacción sin nombre, una consulta en los canales digitales…)',
+        'A nivel general, ¿se identifica que en cada skill, el cliente quede con alguna duda o insatisfacción al finalizar la llamada?',
+        'Para los clientes que indican en la llamada que ya se habían comunicado, ¿Cuál fue la causa del recontacto? ¿podríamos haberlo evitado?',
+        'A nivel general, dentro de la llamada, ¿el cliente nos compara con alguna otra entidad financiera?, si es así, ¿alguna a destacar?',
+    ],
+    Bloqueos: [
+        '¿Qué es lo que más aprecia el cliente en el contacto? (Ej: Agilidad, amabilidad, solución, otras)',
+        '¿Se manifiesta por el cliente reincidencia en el fraude?, ¿Algún comercio puntual?,¿alguna situación particular, que a lo mejor permita identificar un patrón?',
+        '¿Cuáles son las 3 características o el patrón de las llamadas más exitosas?',
+        '¿Qué opinión tiene el cliente del proceso de bloqueo? (Ej: demorado, fácil, incomodo, molesto…)',
+        '¿Cuál es el principal del dolor que el cliente manifiesta en los contactos? (Ej: demoras, complejidad, transferencias, falta de empatía, falta de conocimiento)',
+        'A nivel general, ¿se identifica que en cada skill, el cliente quede con alguna duda o insatisfacción al finalizar la llamada?',
+        'Para los clientes que indican en la llamada que ya se habían comunicado, ¿Cuál fue la causa del recontacto? ¿podríamos haberlo evitado?',
+        'El cliente manifiesta dentro de la llamada, ¿cuál pudo ser la causa del posible fraude?',
+        'A nivel general, dentro de la llamada, ¿el cliente nos compara con alguna otra entidad financiera?, si es así, ¿alguna a destacar?',
+    ],
+    Preferente: [
+        '¿Qué es lo que más aprecia el cliente en el contacto? (Ej: Agilidad, amabilidad, solución, otras)',
+        '¿Cuáles son las 3 características o el patrón de las llamadas más exitosas?',
+        '¿Cuál es el principal del dolor que el cliente manifiesta en los contactos? (Ej: demoras, complejidad, transferencias, falta de empatía, falta de conocimiento)',
+        '¿Cuál es la causa de más llamadas? (Ej: si es consulta de movimientos, ¿qué activa la llamada?, una transacción sin nombre, una consulta en los canales digitales…)',
+        'A nivel general, ¿se identifica que en cada skill, el cliente quede con alguna duda o insatisfacción al finalizar la llamada?',
+        'Para los clientes que indican en la llamada que ya se habían comunicado, ¿Cuál fue la causa del recontacto? ¿podríamos haberlo evitado?',
+        'A nivel general, dentro de la llamada, ¿el cliente nos compara con alguna otra entidad financiera?, si es así, ¿alguna a destacar?',
+    ],
+};
+
+export function getQuestionsForDataset(datasetName?: string): string[] {
+    if (datasetName && QUESTIONS_FOR_REPORTS[datasetName]) {
+        return [...QUESTIONS_FOR_REPORTS[datasetName]];
+    }
+    return [...QUESTIONS_FOR_REPORTS[DEFAULT_DATASET]];
+}
